@@ -21,7 +21,6 @@ import TavilyService from './services/tavilyService'
 import elevenlabsService from './services/elevenlabsService'
 
 // Initialize services
-const storageService = new StorageService();
 const tavilyService = new TavilyService();
 
 
