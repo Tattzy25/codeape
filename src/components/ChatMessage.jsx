@@ -1,11 +1,12 @@
 import React, { memo, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { User, Bot, Clock, Zap, AlertCircle, Copy, Check } from 'lucide-react'
+import { User, Bot, Clock, Zap, AlertCircle, Copy, Check, Volume2, Bookmark, RotateCcw } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import toast from 'react-hot-toast'
+import ReactionBar from './ReactionBar'
 
 // Custom code block component with neumorphism styling
 const CodeBlock = ({ node, inline, className, children, ...props }) => {
@@ -130,26 +131,49 @@ const formatUsage = (usage) => {
   }
 }
 
-const ChatMessage = memo(({ message }) => {
+const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice }) => {
   const isUser = message.role === 'user'
   const isError = message.isError
   const usage = formatUsage(message.usage)
   const timestamp = formatTime(message.timestamp)
   const [isCopied, setIsCopied] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false)
   
   // Copy message content to clipboard
-  const copyToClipboard = useCallback(() => {
-    navigator.clipboard.writeText(message.content)
-      .then(() => {
-        setIsCopied(true)
-        toast.success('Copied to clipboard!')
-        setTimeout(() => setIsCopied(false), 2000)
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err)
-        toast.error('Failed to copy to clipboard')
-      })
+  const copyToClipboard = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      setIsCopied(true)
+      toast.success('Message copied to clipboard!')
+      setTimeout(() => setIsCopied(false), 2000)
+    } catch (err) {
+      toast.error('Failed to copy message')
+    }
   }, [message.content])
+
+  // Handle voice playback
+  const handleVoicePlay = useCallback(async () => {
+    if (onPlayVoice && !isUser) {
+      setIsPlayingVoice(true)
+      try {
+        await onPlayVoice(message.content)
+      } catch (err) {
+        toast.error('Failed to play voice')
+      } finally {
+        setIsPlayingVoice(false)
+      }
+    }
+  }, [onPlayVoice, message.content, isUser])
+
+  // Handle bookmark/save moment
+  const handleBookmark = useCallback(() => {
+    if (onSaveMoment && !isUser) {
+      setIsBookmarked(!isBookmarked)
+      onSaveMoment(message)
+      toast.success(isBookmarked ? 'Moment removed' : 'Moment saved!')
+    }
+  }, [onSaveMoment, message, isUser, isBookmarked])
 
   const messageVariants = {
     initial: { 
@@ -224,22 +248,71 @@ const ChatMessage = memo(({ message }) => {
                 : 'chat-message-ai'
           }`}
         >
-          {/* Copy button */}
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={copyToClipboard}
-            className="absolute top-2 right-2 p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            title="Copy to clipboard"
-          >
-            {isCopied ? (
-              <Check className="w-3 h-3" />
-            ) : (
-              <Copy className="w-3 h-3" />
+          {/* Action buttons */}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            {/* Voice playback for AI messages */}
+            {!isUser && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleVoicePlay}
+                disabled={isPlayingVoice}
+                className="p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 disabled:opacity-50"
+                title="Play voice"
+              >
+                <Volume2 className={`w-3 h-3 ${isPlayingVoice ? 'animate-pulse' : ''}`} />
+              </motion.button>
             )}
-          </motion.button>
+            
+            {/* Flashback icon for AI messages */}
+            {!isUser && message.content.includes('Armenia') && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.1 }}
+                className="p-1 rounded-full bg-neuro-200/80 text-neuro-600"
+                title="Back in Armenia..."
+              >
+                <RotateCcw className="w-3 h-3" />
+              </motion.button>
+            )}
+            
+            {/* Bookmark for AI messages */}
+            {!isUser && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleBookmark}
+                className={`p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 ${
+                  isBookmarked ? 'text-yellow-600' : ''
+                }`}
+                title="Save moment"
+              >
+                <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-current' : ''}`} />
+              </motion.button>
+            )}
+            
+            {/* Copy button */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={copyToClipboard}
+              className="p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600"
+              title="Copy to clipboard"
+            >
+              {isCopied ? (
+                <Check className="w-3 h-3" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </motion.button>
+          </div>
           {/* Message Text */}
           <div className={`prose prose-sm max-w-none ${
             isUser 
@@ -281,7 +354,6 @@ const ChatMessage = memo(({ message }) => {
           </div>
 
           {/* Usage Info for AI messages */}
-
           {usage && (
             <>
               <span>•</span>
@@ -290,7 +362,33 @@ const ChatMessage = memo(({ message }) => {
               </div>
             </>
           )}
+
+          {/* Mood indicator for Kyartu */}
+          {!isUser && message.mood && (
+            <>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                <span className="capitalize">{message.mood}</span>
+              </div>
+            </>
+          )}
         </motion.div>
+        
+        {/* Reaction Bar for Kyartu's messages */}
+        {!isUser && onReaction && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-2"
+          >
+            <ReactionBar 
+              messageId={message.id} 
+              reactions={message.reactions || []} 
+              onReact={onReaction} 
+            />
+          </motion.div>
+        )}
       </div>
 
       {/* User Avatar */}

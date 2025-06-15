@@ -9,6 +9,9 @@ import ChatMessage from './components/ChatMessage'
 import ApiKeyModal from './components/ApiKeyModal'
 import SettingsModal from './components/SettingsModal'
 import TypingIndicator from './components/TypingIndicator'
+import LandingScreen from './components/LandingScreen'
+import Sidebar from './components/Sidebar'
+import Header from './components/Header'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
@@ -46,12 +49,22 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false)
+  
+  // Kyartu Vzgo specific state
+  const [showLandingScreen, setShowLandingScreen] = useState(true)
+  const [userName, setUserName] = useState('')
+  const [userGender, setUserGender] = useState('neutral')
+  const [kyartuMood, setKyartuMood] = useState('unbothered')
+  const [respectMeter, setRespectMeter] = useState(50)
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [savedMoments, setSavedMoments] = useState([])
+  const [chatHistory, setChatHistory] = useState([])
 
   // Refs
-  const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const abortControllerRef = useRef(null)
   const fileInputRef = useRef(null)
+  const messagesEndRef = useRef(null)
 
   // Initialize app
   useEffect(() => {
@@ -93,12 +106,14 @@ function App() {
       if (savedHistory) {
         setMessages(JSON.parse(savedHistory))
       } else {
-        // Add welcome message
+        // Add welcome message based on detected gender/mood
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: 'Araaaa… finally you showed up. Glendale\'s loudest is here. I got two phones, one stomach, zero filters. Let\'s ruin your self-esteem together, bro jan.',
-          timestamp: new Date().toISOString()
+          content: 'Araaa… finally. You look stressed. Sit down. Let\'s ruin your self-esteem together.',
+          timestamp: new Date().toISOString(),
+          mood: 'unbothered',
+          reactions: []
         }])
       }
     } catch (error) {
@@ -509,304 +524,243 @@ function App() {
     setShowMobileMenu(false)
   }, [])
 
+  // Kyartu-specific handlers
+  const handleReaction = useCallback((messageId, reaction) => {
+    setMessages(prevMessages => 
+      prevMessages.map(msg => {
+        if (msg.id === messageId) {
+          const reactions = msg.reactions || []
+          const existingReaction = reactions.find(r => r.type === reaction)
+          
+          if (existingReaction) {
+            existingReaction.count += 1
+          } else {
+            reactions.push({ type: reaction, count: 1 })
+          }
+          
+          return { ...msg, reactions }
+        }
+        return msg
+      })
+    )
+    
+    // Update respect meter based on reaction
+    if (['💀', '🤌', '🥩'].includes(reaction)) {
+      setRespectMeter(prev => Math.min(100, prev + 5))
+    } else if (['💘', '🫠'].includes(reaction)) {
+      setRespectMeter(prev => Math.max(0, prev - 2))
+    }
+  }, [])
+
+  const handleSaveMoment = useCallback((message) => {
+    setSavedMoments(prev => {
+      const exists = prev.find(m => m.id === message.id)
+      if (exists) {
+        return prev.filter(m => m.id !== message.id)
+      } else {
+        return [...prev, { ...message, savedAt: new Date().toISOString() }]
+      }
+    })
+  }, [])
+
+  const handlePlayVoice = useCallback(async (content) => {
+    // Placeholder for ElevenLabs integration
+    toast.success('Voice playback coming soon!')
+    // TODO: Implement ElevenLabs TTS
+  }, [])
+
+  const handleToggleSidebar = useCallback(() => {
+    setShowSidebar(!showSidebar)
+  }, [showSidebar])
+
+  const handleStartChat = useCallback((name, gender) => {
+    setUserName(name)
+    setUserGender(gender)
+    setShowLandingScreen(false)
+    
+    // Update welcome message based on gender
+    const welcomeMessages = {
+      female: "Shat lav eli, who let this beauty in? I'm Kyartu Vzgo — I flirt, I flex, and I got flowers in the car. You hungry? Emotionally or actually?",
+      male: "Ara gyot elnem, you need help from Kyartu? Say less. I don't fix lives. I just roast 'em till you feel better.",
+      other: "Welcome to Glendale therapy, where your problems get laughed at — professionally. I'm Kyartu. I got life advice and leftover khash. Pick one."
+    }
+    
+    const welcomeMessage = {
+      id: 'welcome',
+      role: 'assistant',
+      content: welcomeMessages[gender] || welcomeMessages.other,
+      timestamp: new Date().toISOString(),
+      mood: 'unbothered',
+      reactions: []
+    }
+    
+    setMessages([welcomeMessage])
+  }, [])
+
   return (
     <div className="min-h-screen bg-neuro-base flex flex-col mobile-safe-area">
-      {/* Header */}
-      <motion.header 
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="neuro-card m-4 mb-0 p-4 flex items-center justify-between relative z-20"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
-            <img src="/logo.svg" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gradient">Kyartu Vzgo</h1>
-            <p className="text-sm text-neuro-500">Glendale's loudest. Armenia's proudest. Your ego's worst enemy</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {/* Desktop buttons - hidden on mobile */}
-          <div className="hidden md:flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={triggerFileUpload}
-              className="neuro-button p-3"
-              title="Upload Files (ZIP, Text, Code)"
-            >
-              <Upload className="w-4 h-4 text-neuro-600" />
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={fixAndDownload}
-              disabled={uploadedFiles.length === 0 || isProcessing}
-              className={`neuro-button p-3 ${uploadedFiles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={`Fix & Download ${uploadedFiles.length} file(s)`}
-            >
-              {isProcessing ? (
-                <RefreshCw className="w-4 h-4 text-neuro-600 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4 text-neuro-600" />
-              )}
-            </motion.button>
-            
-            <motion.button
-               whileHover={{ scale: 1.05 }}
-               whileTap={{ scale: 0.95 }}
-               onClick={() => setShowProcessingModal(true)}
-               className="neuro-button p-3"
-               title="Processing Options"
-             >
-               <RefreshCw className="w-4 h-4 text-neuro-600" />
-             </motion.button>
-             
-             <motion.button
-               whileHover={{ scale: 1.05 }}
-               whileTap={{ scale: 0.95 }}
-               onClick={() => setShowSettingsModal(true)}
-               className="neuro-button p-3"
-               title="Settings"
-             >
-               <Settings className="w-4 h-4 text-neuro-600" />
-             </motion.button>
-          </div>
-          
-          {/* Mobile menu button */}
-          <div className="md:hidden relative">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="neuro-button p-3"
-              title="Menu"
-            >
-              {showMobileMenu ? (
-                <X className="w-4 h-4 text-neuro-600" />
-              ) : (
-                <Menu className="w-4 h-4 text-neuro-600" />
-              )}
-            </motion.button>
-            
-            {/* Mobile dropdown menu */}
+      {/* Show Landing Screen or Main App */}
+      {showLandingScreen ? (
+        <LandingScreen onStartChat={handleStartChat} />
+      ) : (
+        <>
+          {/* Header Component */}
+          <Header
+            uploadedFiles={uploadedFiles}
+            isProcessing={isProcessing}
+            triggerFileUpload={triggerFileUpload}
+            fixAndDownload={fixAndDownload}
+            setShowProcessingModal={setShowProcessingModal}
+            setShowSettingsModal={setShowSettingsModal}
+            showMobileMenu={showMobileMenu}
+            setShowMobileMenu={setShowMobileMenu}
+            closeMobileMenu={closeMobileMenu}
+            kyartuMood={kyartuMood}
+            onToggleSidebar={handleToggleSidebar}
+          />
+
+          {/* Main App Layout */}
+          <div className="flex flex-1 gap-4 p-4 pt-0">
+            {/* Sidebar */}
             <AnimatePresence>
-              {showMobileMenu && (
-                <>
-                  {/* Backdrop */}
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/20 z-40"
-                    onClick={closeMobileMenu}
-                  />
-                  
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    className="absolute right-0 top-full mt-2 w-48 neuro-card p-2 z-50 shadow-lg border border-neuro-300"
-                  >
-                    <div className="space-y-1">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        triggerFileUpload()
-                        setShowMobileMenu(false)
-                      }}
-                      className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
-                    >
-                      <Upload className="w-4 h-4 text-neuro-600" />
-                      <span className="text-neuro-700 text-sm">Upload Files</span>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        fixAndDownload()
-                        setShowMobileMenu(false)
-                      }}
-                      disabled={uploadedFiles.length === 0 || isProcessing}
-                      className={`w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors ${
-                         uploadedFiles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                       }`}
-                    >
-                      {isProcessing ? (
-                        <RefreshCw className="w-4 h-4 text-neuro-600 animate-spin" />
-                      ) : (
-                        <Download className="w-4 h-4 text-neuro-600" />
-                      )}
-                      <span className="text-neuro-700 text-sm">
-                        Fix & Download {uploadedFiles.length > 0 ? `(${uploadedFiles.length})` : ''}
-                      </span>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setShowProcessingModal(true)
-                        setShowMobileMenu(false)
-                      }}
-                      className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
-                    >
-                      <RefreshCw className="w-4 h-4 text-neuro-600" />
-                      <span className="text-neuro-700 text-sm">Processing Options</span>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setShowSettingsModal(true)
-                        setShowMobileMenu(false)
-                      }}
-                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-neuro-100 rounded-lg transition-colors"
-                    >
-                      <Settings className="w-4 h-4 text-neuro-600" />
-                      <span className="text-neuro-700 text-sm">Settings</span>
-                    </motion.button>
-                  </div>
-                </motion.div>
-                </>
+              {showSidebar && (
+                <Sidebar
+                  respectMeter={respectMeter}
+                  kyartuMood={kyartuMood}
+                  chatHistory={chatHistory}
+                  savedMoments={savedMoments}
+                  userName={userName}
+                  onClose={() => setShowSidebar(false)}
+                />
               )}
             </AnimatePresence>
-          </div>
-          
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".zip,.txt,.md,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.h,.css,.html,.json,.xml,.yaml,.yml"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-        </div>
-      </motion.header>
 
-      {/* Chat Messages */}
-      <main className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
-          <AnimatePresence>
-            {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
-            ))}
-          </AnimatePresence>
-          
-          {/* Typing Indicator */}
-          {isTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="flex justify-start"
-            >
-              <div className="chat-message-ai">
-                {streamingMessage ? (
-                  <div className="whitespace-pre-wrap">{streamingMessage}</div>
-                ) : (
-                  <TypingIndicator />
+            {/* Chat Messages */}
+            <main className="flex-1 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
+                <AnimatePresence>
+                  {messages.map((message) => (
+                    <ChatMessage 
+                      key={message.id} 
+                      message={message}
+                      onReaction={handleReaction}
+                      onSaveMoment={handleSaveMoment}
+                      onPlayVoice={handlePlayVoice}
+                      isSaved={savedMoments.some(m => m.id === message.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+                
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex justify-start"
+                  >
+                    <div className="chat-message-ai">
+                      {streamingMessage ? (
+                        <div className="whitespace-pre-wrap">{streamingMessage}</div>
+                      ) : (
+                        <TypingIndicator />
+                      )}
+                    </div>
+                  </motion.div>
                 )}
+                
+                <div ref={messagesEndRef} />
               </div>
-            </motion.div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
 
-        {/* Input Area */}
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="p-2 sm:p-4"
-        >
-          <form onSubmit={handleSubmit} className="chat-input-container">
-            <div className="flex-1 relative">
-              <textarea
-                ref={inputRef}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className="neuro-input-field resize-none min-h-[44px] max-h-32 pr-12"
-                rows={1}
-                disabled={isLoading}
-                maxLength={8000}
-              />
-              
-              {inputMessage && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                >
-                  <Sparkles className="w-4 h-4 text-neuro-400" />
-                </motion.div>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              {isLoading ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  type="button"
-                  onClick={stopGeneration}
-                  className="neuro-button-secondary px-4 py-3 text-red-600"
-                >
-                  Stop
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  type="submit"
-                  disabled={!inputMessage.trim() || !groqService.isReady()}
-                  className="neuro-button-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" />
-                </motion.button>
-              )}
-            </div>
-          </form>
-          
-          {/* Quick Actions */}
-          <div className="flex justify-center mt-3 gap-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={clearChat}
-              className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
-            >
-              Clear Chat
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
-              className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                isDeepSearchEnabled 
-                  ? 'text-white gradient-primary shadow-lg' 
-                  : 'text-neuro-500 hover:text-neuro-700 neuro-button'
-              }`}
-            >
-              🔍 Deep Search
-            </motion.button>
-            
-            <div className="text-xs text-neuro-400 px-3 py-1">
-              {messages.length > 1 ? `${messages.length - 1} messages` : 'Start chatting'}
-            </div>
+              {/* Input Area */}
+              <motion.div 
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="p-2 sm:p-4"
+              >
+                <form onSubmit={handleSubmit} className="chat-input-container">
+                  <div className="flex-1 relative">
+                    <textarea
+                      ref={inputRef}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type your message..."
+                      className="neuro-input-field resize-none min-h-[44px] max-h-32 pr-12"
+                      rows={1}
+                      disabled={isLoading}
+                      maxLength={8000}
+                    />
+                    
+                    {inputMessage && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        <Sparkles className="w-4 h-4 text-neuro-400" />
+                      </motion.div>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {isLoading ? (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={stopGeneration}
+                        className="neuro-button-secondary px-4 py-3 text-red-600"
+                      >
+                        Stop
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
+                        disabled={!inputMessage.trim() || !groqService.isReady()}
+                        className="neuro-button-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Send className="w-4 h-4" />
+                      </motion.button>
+                    )}
+                  </div>
+                </form>
+                
+                {/* Quick Actions */}
+                <div className="flex justify-center mt-3 gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={clearChat}
+                    className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
+                  >
+                    Clear Chat
+                  </motion.button>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
+                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                      isDeepSearchEnabled 
+                        ? 'text-white gradient-primary shadow-lg' 
+                        : 'text-neuro-500 hover:text-neuro-700 neuro-button'
+                    }`}
+                  >
+                    🔍 Deep Search
+                  </motion.button>
+                  
+                  <div className="text-xs text-neuro-400 px-3 py-1">
+                    {messages.length > 1 ? `${messages.length - 1} messages` : 'Start chatting'}
+                  </div>
+                </div>
+              </motion.div>
+            </main>
           </div>
-        </motion.div>
-      </main>
+        </>
+      )}
 
       {/* Modals */}
       <ApiKeyModal
@@ -973,6 +927,16 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json,.xml,.md,.txt"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
     </div>
   )
 }
