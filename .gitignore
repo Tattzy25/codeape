@@ -198,3 +198,4 @@ storybook-static
 # Chromatic
 chromatic.log
 .vercel
+.env*.local

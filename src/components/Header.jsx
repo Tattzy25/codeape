@@ -24,9 +24,6 @@ const Header = ({
       className="neuro-card m-4 mb-0 p-4 flex items-center justify-between relative z-20"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full overflow-hidden">
-             <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
-        </div>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gradient">Kyartu Vzgo</h1>
           <p className="text-sm text-neuro-500">Glendale's loudest. Armenia's proudest. Your ego's worst enemy.</p>
@@ -45,41 +42,7 @@ const Header = ({
       <div className="flex items-center gap-2">
         {/* Desktop buttons - hidden on mobile */}
         <div className="hidden md:flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onToggleSidebar}
-            className="neuro-button p-3"
-            title="Toggle Sidebar"
-          >
-            <Menu className="w-4 h-4 text-neuro-600" />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={triggerFileUpload}
-            className="neuro-button p-3"
-            title="Upload Files (ZIP, Text, Code)"
-          >
-            <Upload className="w-4 h-4 text-neuro-600" />
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={fixAndDownload}
-            disabled={uploadedFiles.length === 0 || isProcessing}
-            className={`neuro-button p-3 ${uploadedFiles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={`Fix & Download ${uploadedFiles.length} file(s)`}
-          >
-            {isProcessing ? (
-              <RefreshCw className="w-4 h-4 text-neuro-600 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4 text-neuro-600" />
-            )}
-          </motion.button>
-          
-          <motion.button
+           <motion.button
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
              onClick={() => setShowProcessingModal(true)}
@@ -136,53 +99,6 @@ const Header = ({
                   className="absolute right-0 top-full mt-2 w-48 neuro-card p-2 z-50 shadow-lg border border-neuro-300"
                 >
                   <div className="space-y-1">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      onToggleSidebar()
-                      setShowMobileMenu(false)
-                    }}
-                    className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
-                  >
-                    <Menu className="w-4 h-4 text-neuro-600" />
-                    <span className="text-neuro-700 text-sm">Toggle Sidebar</span>
-                  </motion.button>
-                  
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      triggerFileUpload()
-                      setShowMobileMenu(false)
-                    }}
-                    className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
-                  >
-                    <Upload className="w-4 h-4 text-neuro-600" />
-                    <span className="text-neuro-700 text-sm">Upload Files</span>
-                  </motion.button>
-                  
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      fixAndDownload()
-                      setShowMobileMenu(false)
-                    }}
-                    disabled={uploadedFiles.length === 0 || isProcessing}
-                    className={`w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors ${
-                       uploadedFiles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                     }`}
-                  >
-                    {isProcessing ? (
-                      <RefreshCw className="w-4 h-4 text-neuro-600 animate-spin" />
-                    ) : (
-                      <Download className="w-4 h-4 text-neuro-600" />
-                    )}
-                    <span className="text-neuro-700 text-sm">
-                      Fix & Download {uploadedFiles.length > 0 ? `(${uploadedFiles.length})` : ''}
-                    </span>
-                  </motion.button>
                   
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -204,7 +120,7 @@ const Header = ({
                       setShowSettingsModal(true)
                       setShowMobileMenu(false)
                     }}
-                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-neuro-100 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
                   >
                     <Settings className="w-4 h-4 text-neuro-600" />
                     <span className="text-neuro-700 text-sm">Settings</span>

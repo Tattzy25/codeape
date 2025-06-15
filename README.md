@@ -1,46 +1,68 @@
-# Groq AI Chatbot 🤖
+# 🔥 KYARTU - AI Chatbot with Redis Storage
 
-A revolutionary, modern, responsive chatbot application powered by Groq's lightning-fast AI models. Built with React, Vite, and Tailwind CSS featuring a beautiful neumorphism design inspired by modern mobile chat interfaces.
+A revolutionary, modern, responsive chatbot application powered by Groq's lightning-fast AI models with advanced Redis-based data persistence. Meet **Kyartu** - your savage, witty AI companion with personality, memory, and attitude. Built with React, Vite, Tailwind CSS, and Redis featuring a beautiful neumorphism design.
 
-![Groq AI Chatbot](https://img.shields.io/badge/AI-Groq%20Powered-blue?style=for-the-badge&logo=robot)
+![Kyartu AI](https://img.shields.io/badge/AI-Kyartu%20Powered-red?style=for-the-badge&logo=robot)
+![Redis](https://img.shields.io/badge/Redis-Enabled-DC382D?style=for-the-badge&logo=redis)
 ![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)
 ![Vite](https://img.shields.io/badge/Vite-4.5.0-646CFF?style=for-the-badge&logo=vite)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3.5-38B2AC?style=for-the-badge&logo=tailwind-css)
 
 ## ✨ Features
 
+### 🔥 **Meet Kyartu - Your AI with Attitude**
+- **Savage Personality**: Witty, roasting, and brutally honest responses
+- **Dynamic Moods**: Flirty, savage, emotional, annoyed - adapts to conversations
+- **Respect Meter**: Tracks your standing with Kyartu (0-100%)
+- **Memory System**: Remembers your jokes, preferences, and interactions
+- **Emoji Reactions**: React to messages with custom Armenian-style emojis
+
 ### 🚀 **Lightning Fast AI**
 - Powered by Groq's high-performance AI models
 - Real-time streaming responses
 - Multiple model selection (Llama 4 Scout, Llama 4 Maverick)
 - Optimized for speed and efficiency
+- Web search integration with Tavily API
+
+### 💾 **Redis-Powered Persistence**
+- **Chat History**: 24h-7d TTL for seamless conversations
+- **Session State**: Tracks conversation modes and context
+- **User Preferences**: 30-day persistence for settings
+- **Search Cache**: 1h caching to prevent API overload
+- **Joke Bank**: Stores user jokes for future roasting (3d TTL)
+- **Reaction Tracking**: Emoji reaction analytics (7d TTL)
+- **Moderation Flags**: User behavior tracking and warnings
+- **Last Seen**: Activity monitoring for comeback roasts
 
 ### 🎨 **Modern UI/UX**
 - Beautiful neumorphism design system
 - Smooth animations with Framer Motion
 - Mobile-first responsive design
-- Dark/Light theme support (coming soon)
+- Kyartu-themed interface with personality
 - Accessibility compliant (WCAG 2.1)
 
 ### 📱 **Mobile Optimized**
 - Progressive Web App (PWA) ready
 - Touch-friendly interface
-- Offline capability
+- Offline capability with localStorage fallback
 - Installable on mobile devices
 - Optimized for all screen sizes
 
-### 🔧 **Customizable**
+### 🔧 **Advanced Features**
 - Adjustable AI parameters (temperature, max tokens, top-p)
 - Model selection and switching
-- Conversation settings
-- Export/Import chat history with JSZip compression
-- Bulk conversation management
+- Voice playback (placeholder)
+- Moment saving and bookmarking
+- Export/Import chat history
+- Deep search toggle
+- Real-time typing indicators
 
 ### 🔒 **Secure & Private**
 - API keys stored locally in browser
-- No server-side data storage
+- Redis data with TTL expiration
 - HTTPS ready
 - Input validation and sanitization
+- Graceful fallback to localStorage
 
 ## 🚀 Quick Start
 
@@ -48,6 +70,8 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 
 - **Node.js** 16+ installed ([Download](https://nodejs.org/))
 - **Groq API Key** (get one free at [console.groq.com/keys](https://console.groq.com/keys))
+- **Redis Database** (Upstash recommended - [console.upstash.com](https://console.upstash.com/))
+- **Tavily API Key** (optional, for web search - [tavily.com](https://tavily.com/))
 
 ### Installation
 
@@ -66,9 +90,12 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and add your Groq API key:
+   Edit `.env` and add your API keys:
    ```env
    VITE_GROQ_API_KEY=your_groq_api_key_here
+   UPSTASH_REDIS_REST_URL=your_redis_url_here
+   UPSTASH_REDIS_REST_TOKEN=your_redis_token_here
+   VITE_TAVILY_API_KEY=your_tavily_key_here
    ```
 
 4. **Start the development server**
@@ -98,7 +125,182 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 ### Environment Variables
 
 ```env
-# Required
+# Required - Groq AI API
+VITE_GROQ_API_KEY=your_groq_api_key_here
+
+# Required - Redis Database (Upstash recommended)
+UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_redis_token_here
+
+# Optional - Web Search
+VITE_TAVILY_API_KEY=your_tavily_api_key_here
+```
+
+## 🔥 Redis Storage System
+
+Kyartu uses Redis for advanced data persistence with intelligent TTL management:
+
+### Storage Types
+
+| Data Type | Key Pattern | TTL | Purpose |
+|-----------|-------------|-----|----------|
+| **Chat History** | `chat:session:{sessionId}` | 24h | Recent conversation context |
+| **Session State** | `session:{sessionId}` | 24h | Current mode & page tracking |
+| **Respect Meter** | `meter:respect:{userId}` | 7d | User respect score (0-5) |
+| **Mood Meter** | `meter:mood:{userId}` | 7d | Kyartu's current mood |
+| **Search Cache** | `search:{queryHash}` | 1h | Cached Tavily search results |
+| **User Jokes** | `jokes:user:{userId}` | 3d | User's funny moments for roasting |
+| **Reactions** | `reaction:message:{messageId}` | 7d | Emoji reaction tracking |
+| **User Preferences** | `prefs:user:{userId}` | 30d | Settings & behavior preferences |
+| **Moderation Flags** | `flags:user:{userId}` | 24h | Warnings, mutes, timeouts |
+| **Last Seen** | `lastSeen:user:{userId}` | 7d | Activity tracking |
+
+### Redis Commands Reference
+
+#### 1. Chat History Management
+```javascript
+// Set chat history
+await redis.set(`chat:session:${sessionId}`, JSON.stringify(chatMessages), { ex: 86400 });
+
+// Get chat history
+const history = await redis.get(`chat:session:${sessionId}`);
+const messages = history ? JSON.parse(history) : [];
+```
+
+#### 2. Session State Tracking
+```javascript
+// Set session state
+await redis.set(`session:${sessionId}`, JSON.stringify({
+  currentMode: 'roast',
+  lastPage: 'home',
+  joinedAt: Date.now()
+}), { ex: 86400 });
+
+// Get session state
+const state = await redis.get(`session:${sessionId}`);
+const session = state ? JSON.parse(state) : {};
+```
+
+#### 3. Respect & Mood Meters
+```javascript
+// Update respect/mood meter
+await redis.set(`meter:respect:${userId}`, respectScore, { ex: 604800 }); // 7 days
+await redis.set(`meter:mood:${userId}`, currentMood, { ex: 604800 });
+
+// Get respect/mood
+const respect = await redis.get(`meter:respect:${userId}`);
+const mood = await redis.get(`meter:mood:${userId}`);
+```
+
+#### 4. Search Result Caching
+```javascript
+// Cache search results
+await redis.set(`search:${queryHash}`, JSON.stringify(results), { ex: 3600 }); // 1 hour
+
+// Get cached search results
+const cached = await redis.get(`search:${queryHash}`);
+const results = cached ? JSON.parse(cached) : null;
+```
+
+#### 5. User Joke Bank
+```javascript
+// Save user jokes
+await redis.set(`jokes:user:${userId}`, JSON.stringify(jokesArray), { ex: 259200 }); // 3 days
+
+// Fetch user jokes
+const jokeData = await redis.get(`jokes:user:${userId}`);
+const jokes = jokeData ? JSON.parse(jokeData) : [];
+```
+
+#### 6. Reaction Tracking
+```javascript
+// Track reactions
+await redis.set(`reaction:message:${messageId}`, JSON.stringify({ 😂: 3, 💀: 1 }), { ex: 604800 });
+
+// Get reactions
+const reactionData = await redis.get(`reaction:message:${messageId}`);
+const reactions = reactionData ? JSON.parse(reactionData) : {};
+```
+
+#### 7. User Preferences
+```javascript
+// Save user preferences
+await redis.set(`prefs:user:${userId}`, JSON.stringify({
+  flirtMode: true,
+  censorMode: false
+}), { ex: 2592000 }); // 30 days
+
+// Get user preferences
+const prefs = await redis.get(`prefs:user:${userId}`);
+const userPrefs = prefs ? JSON.parse(prefs) : {};
+```
+
+#### 8. Moderation System
+```javascript
+// Set moderation flag
+await redis.set(`flags:user:${userId}`, JSON.stringify({
+  muted: true,
+  reason: "Too many cringe messages"
+}), { ex: 86400 });
+
+// Get flag status
+const flagged = await redis.get(`flags:user:${userId}`);
+const flags = flagged ? JSON.parse(flagged) : {};
+```
+
+#### 9. Activity Tracking
+```javascript
+// Track last seen
+await redis.set(`lastSeen:user:${userId}`, Date.now(), { ex: 604800 }); // 7 days
+```
+
+### TTL Reference (seconds)
+- **1 hour** → `3600`
+- **1 day** → `86400`
+- **3 days** → `259200`
+- **7 days** → `604800`
+- **30 days** → `2592000`
+
+## 🎭 Kyartu Personality System
+
+### Mood States
+- **😏 Flirty**: Charming and playful responses
+- **🔥 Savage**: Roasting mode with witty comebacks
+- **😢 Emotional**: Empathetic and understanding
+- **😤 Annoyed**: Short, sarcastic responses
+
+### Respect Meter (0-100%)
+- **90-100%**: King/Queen status - maximum respect
+- **70-89%**: Good standing - friendly interactions
+- **50-69%**: Neutral - standard responses
+- **30-49%**: Low respect - mild roasting
+- **0-29%**: Clown status - savage mode activated
+
+### Reaction System
+- 🥲 **I felt that** - Emotional connection
+- 💀 **Dead** - Hilarious response
+- 🧿 **Ayo chill** - Too intense
+- 🤌 **That's facts** - Agreement
+- 🥩 **Too raw** - Savage response
+- 🫠 **He's cooking again** - On fire
+- 💘 **Marry me** - Love it
+
+## 🔧 Setup Instructions
+
+For detailed Redis setup instructions, see [REDIS_SETUP.md](./REDIS_SETUP.md)
+
+### Quick Redis Setup (Upstash)
+1. Go to [Upstash Console](https://console.upstash.com/)
+2. Create a new Redis database
+3. Copy REST URL and Token
+4. Add to your `.env` file
+5. Start the application
+
+### Local Redis Setup
+1. Install Redis locally
+2. Update `pages/api/redis.js` for local connection
+3. Start Redis server
+4. Configure connection in environment# Required
 VITE_GROQ_API_KEY=your_api_key
 
 # Optional

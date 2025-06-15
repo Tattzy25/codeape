@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp } from 'lucide-react'
 
 const Sidebar = ({ 
-  isOpen, 
+  isOpen = true, 
   onClose, 
   respectMeter, 
   kyartuMood, 
   chatHistory, 
   savedMoments, 
+  userName,
   onSelectChat,
   onToggleMoment 
 }) => {
@@ -35,37 +36,37 @@ const Sidebar = ({
   const respectLevel = getRespectLevel(respectMeter)
 
   return (
-    <AnimatePresence>
+    <>
+      {/* Mobile Backdrop */}
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          />
-          
-          {/* Sidebar */}
-          <motion.div
-            initial={{ x: -300 }}
-            animate={{ x: 0 }}
-            exit={{ x: -300 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 h-full w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
-          >
-            {/* Header */}
-            <div className="p-6 border-b border-neuro-300">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gradient">Kyartu's Den</h2>
-                <button
-                  onClick={onClose}
-                  className="neuro-button p-2 lg:hidden"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+        />
+      )}
+      
+      {/* Sidebar */}
+      <motion.div
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
+        exit={{ x: -300 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="fixed lg:relative left-0 top-0 h-full w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-neuro-300">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gradient">Kyartu's Den</h2>
+            <button
+              onClick={onClose}
+              className="neuro-button p-2 lg:hidden"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
               
               {/* Kyartu's Current Mood */}
               <div className="neuro-card p-4 mb-4">
@@ -215,11 +216,9 @@ const Sidebar = ({
                 </p>
               )}
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  )
-}
+       </motion.div>
+     </>
+   )
+ }
 
 export default Sidebar
