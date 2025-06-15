@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Styles */
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply bg-neuro-base text-neuro-700 font-sans antialiased;
+    @apply min-h-screen overflow-x-hidden;
+    background: linear-gradient(135deg, #e0e5ec 0%, #f8fafc 100%);
+  }
+  
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+/* Custom Scrollbar */
+@layer components {
+  .custom-scrollbar {
+    /* Using width property for cross-browser compatibility */
+    width: thin;
+    scrollbar-color: #a3b1c6 #e0e5ec;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-neuro-base rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-neuro-dark rounded-full;
+    box-shadow: inset 2px 2px 4px #a3b1c6, inset -2px -2px 4px #ffffff;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-neuro-600;
+  }
+}
+
+/* Neumorphism Components */
+@layer components {
+  .neuro-container {
+    @apply bg-neuro-base rounded-neuro-lg p-6;
+    box-shadow: 20px 20px 40px #a3b1c6, -20px -20px 40px #ffffff;
+  }
+  
+  .neuro-button-primary {
+    @apply neuro-button px-6 py-3 text-white font-medium;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 8px 8px 16px #a3b1c6, -8px -8px 16px #ffffff;
+  }
+  
+  .neuro-button-primary:hover {
+    box-shadow: 12px 12px 24px #a3b1c6, -12px -12px 24px #ffffff;
+    transform: translateY(-2px);
+  }
+  
+  .neuro-button-primary:active {
+    box-shadow: inset 4px 4px 8px #a3b1c6, inset -4px -4px 8px #ffffff;
+    transform: translateY(0);
+  }
+  
+  .neuro-button-secondary {
+    @apply neuro-button px-6 py-3 text-neuro-700 font-medium;
+  }
+  
+  .neuro-input-field {
+    @apply neuro-input w-full px-4 py-3 text-neuro-700 placeholder-neuro-400;
+    @apply focus:shadow-neuro-pressed transition-all duration-300;
+  }
+  
+  .neuro-card-elevated {
+    @apply neuro-card p-6 transition-all duration-300;
+  }
+  
+  .neuro-card-elevated:hover {
+    box-shadow: 25px 25px 50px #a3b1c6, -25px -25px 50px #ffffff;
+    transform: translateY(-5px);
+  }
+}
+
+/* Chat Specific Styles */
+@layer components {
+  .chat-message-user {
+    @apply bg-gradient-to-r from-primary-from to-primary-to text-white;
+    @apply rounded-2xl rounded-br-md px-4 py-3 w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[65%] xl:max-w-[55%] ml-auto;
+    box-shadow: 8px 8px 16px rgba(102, 126, 234, 0.3);
+  }
+  
+  .chat-message-ai {
+    @apply bg-neuro-base text-neuro-700;
+    @apply rounded-2xl rounded-bl-md px-4 py-3 w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[65%] xl:max-w-[55%] mr-auto;
+    box-shadow: 8px 8px 16px #a3b1c6, -8px -8px 16px #ffffff;
+  }
+  
+  .chat-input-container {
+    @apply neuro-card p-3 sm:p-4 flex items-center gap-2 sm:gap-3;
+    background: rgba(224, 229, 236, 0.95);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  
+  .typing-indicator {
+    @apply flex items-center gap-1;
+  }
+  
+  .typing-dot {
+    @apply w-2 h-2 bg-neuro-400 rounded-full;
+    animation: typing 1.4s ease-in-out infinite;
+  }
+  
+  .typing-dot:nth-child(1) {
+    animation-delay: 0s;
+  }
+  
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+/* Gradient Animations */
+@layer utilities {
+  .gradient-animated {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-from to-primary-to bg-clip-text text-transparent;
+  }
+  
+  .border-gradient {
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+  }
+}
+
+/* Responsive Design */
+@layer utilities {
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .mobile-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* Accessibility */
+@layer utilities {
+  .focus-visible {
+    @apply outline-none ring-2 ring-primary-from ring-offset-2 ring-offset-neuro-base;
+  }
+  
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-friendly {
+    @apply bg-white text-black shadow-none;
+  }
+}
+
+/* Dark Mode Support (Future Enhancement) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode {
+    --neuro-base: #2d3748;
+    --neuro-light: #4a5568;
+    --neuro-dark: #1a202c;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .high-contrast {
+    @apply border-2 border-black;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Disallow sensitive areas (if any)
+Disallow: /api/
+Disallow: /.env
+Disallow: /config/
+
+# Allow common assets
+Allow: /assets/
+Allow: /images/
+Allow: /css/
+Allow: /js/
+Allow: /fonts/
+
+# SEO friendly
+Allow: /manifest.json
+Allow: /favicon.ico
+Allow: /vite.svg
