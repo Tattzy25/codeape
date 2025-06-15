@@ -102,7 +102,7 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 VITE_GROQ_API_KEY=your_api_key
 
 # Optional
-VITE_DEFAULT_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+VITE_DEFAULT_MODEL=llama-3.3-70b-versatile
 VITE_DEFAULT_TEMPERATURE=0.7
 VITE_DEFAULT_MAX_TOKENS=5000
 VITE_APP_NAME="Your App Name"

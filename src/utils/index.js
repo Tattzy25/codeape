@@ -305,7 +305,7 @@ export const API_ENDPOINTS = {
 };
 
 export const DEFAULT_SETTINGS = {
-  model: 'llama3-8b-8192',
+  model: 'llama-3.3-70b-versatile',
   temperature: 0.7,
   maxTokens: 1024,
   topP: 1,

@@ -1,28 +1,40 @@
-import Groq from 'groq-sdk'
+/**
+ * Groq AI Service
+ * Handles communication with Groq API for AI chat functionality
+ */
+
+import Groq from 'groq-sdk';
 
 // Available Groq models with their capabilities
 export const GROQ_MODELS = {
-  'meta-llama/llama-4-scout-17b-16e-instruct': {
-    name: 'Llama 4 Scout 17B',
-    description: 'Advanced scouting and exploration capabilities',
-    maxTokens: 5000,
-    speed: 'Fast',
-    capability: 'Scout & Analysis'
+  'llama-3.3-70b-versatile': {
+    name: 'Llama 3.3 70B Versatile',
+    description: 'High-performance model for complex reasoning and analysis',
+    maxTokens: 32768,
+    speed: 'Medium',
+    capability: 'Advanced Reasoning'
   },
-  'meta-llama/llama-4-maverick-17b-128e-instruct': {
-    name: 'Llama 4 Maverick 17B',
-    description: 'Innovative and creative problem solving',
-    maxTokens: 5000,
+  'llama-3.1-8b-instant': {
+    name: 'Llama 3.1 8B Instant',
+    description: 'Fast and efficient model for quick responses',
+    maxTokens: 8192,
+    speed: 'Very Fast',
+    capability: 'Quick Response'
+  },
+  'gemma2-9b-it': {
+    name: 'Gemma 2 9B Instruct',
+    description: 'Google\'s efficient instruction-following model',
+    maxTokens: 8192,
     speed: 'Fast',
-    capability: 'Creative Reasoning'
+    capability: 'Instruction Following'
   }
 }
 
 // Default settings
 export const DEFAULT_SETTINGS = {
-  model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  model: 'llama-3.3-70b-versatile',
   temperature: 0.7,
-  maxTokens: 5000,
+  maxTokens: 8192,
   topP: 1,
   stream: true
 }
@@ -207,10 +219,10 @@ class GroqService {
         dangerouslyAllowBrowser: true
       })
 
-      // Send a minimal test request
+      // Send a minimal test request using a current production model
       await tempClient.chat.completions.create({
         messages: [{ role: 'user', content: 'Hi' }],
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         max_tokens: 1,
         temperature: 0
       })
@@ -237,27 +249,7 @@ class GroqService {
     }))
   }
 
-  // Calculate estimated cost (placeholder - Groq pricing may vary)
-  estimateCost(inputTokens, outputTokens, model) {
-    // This is a placeholder - actual pricing should be fetched from Groq
-    const pricing = {
-      'llama3-8b-8192': { input: 0.05, output: 0.08 },
-      'llama3-70b-8192': { input: 0.59, output: 0.79 },
-      'mixtral-8x7b-32768': { input: 0.24, output: 0.24 },
-      'gemma-7b-it': { input: 0.07, output: 0.07 }
-    }
 
-    const modelPricing = pricing[model] || pricing['llama3-8b-8192']
-    const inputCost = (inputTokens / 1000000) * modelPricing.input
-    const outputCost = (outputTokens / 1000000) * modelPricing.output
-    
-    return {
-      inputCost,
-      outputCost,
-      totalCost: inputCost + outputCost,
-      currency: 'USD'
-    }
-  }
 }
 
 // Export singleton instance

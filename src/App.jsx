@@ -13,6 +13,7 @@ import TypingIndicator from './components/TypingIndicator'
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
 import tavilyService from './services/tavilyService'
+import redisService from './services/redisService'
 
 // Local storage keys
 const STORAGE_KEYS = {
