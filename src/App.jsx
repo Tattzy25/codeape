@@ -44,6 +44,7 @@ function App() {
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false)
 
   // Refs
   const messagesEndRef = useRef(null)
@@ -205,8 +206,10 @@ function App() {
         }
 
         // Perform Tavily search
-        setStreamingMessage('🔍 Searching the web...');
-        const searchResults = await tavilyService.search(searchQuery);
+         setStreamingMessage(isDeepSearchEnabled ? '🔍 Deep searching the web...' : '🔍 Searching the web...');
+         const searchResults = isDeepSearchEnabled 
+           ? await tavilyService.advancedSearch(searchQuery)
+           : await tavilyService.search(searchQuery);
         
         // Format search results
         const formattedResults = tavilyService.formatResults(searchResults);
@@ -285,7 +288,7 @@ function App() {
       abortControllerRef.current = null
       inputRef.current?.focus()
     }
-  }, [inputMessage, messages, settings, isLoading, saveToStorage])
+  }, [inputMessage, messages, settings, isLoading, saveToStorage, isDeepSearchEnabled])
 
   // Handle input key press
   const handleKeyPress = useCallback((e) => {
@@ -782,6 +785,19 @@ function App() {
               className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
             >
               Clear Chat
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
+              className={`text-xs px-3 py-1 rounded-full neuro-button transition-colors ${
+                isDeepSearchEnabled 
+                  ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
+                  : 'text-neuro-500 hover:text-neuro-700'
+              }`}
+            >
+              🔍 Deep Search
             </motion.button>
             
             <div className="text-xs text-neuro-400 px-3 py-1">
