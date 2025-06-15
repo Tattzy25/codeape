@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { Toaster } from 'react-hot-toast'
+import { Analytics } from '@vercel/analytics/react'
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -116,6 +117,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <App />
       <Toaster toastOptions={toastOptions} />
+      <Analytics />
     </ErrorBoundary>
   </React.StrictMode>,
 )
