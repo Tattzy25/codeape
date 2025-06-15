@@ -97,7 +97,7 @@ function App() {
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: '👋 Welcome to Groq AI Chat! I\'m powered by lightning-fast AI models and web search capabilities.\n\n**Available Commands:**\n- Regular chat: Just type your message\n- Web search: `/search [query]`, `/web [query]`, or `/tavily [query]`\n\nHow can I help you today?',
+          content: 'Araaaa… finally you showed up. Glendale\'s loudest is here. I got two phones, one stomach, zero filters. Let\'s ruin your self-esteem together, bro jan.',
           timestamp: new Date().toISOString()
         }])
       }
@@ -518,12 +518,12 @@ function App() {
         className="neuro-card m-4 mb-0 p-4 flex items-center justify-between relative z-20"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img src="/logo.svg" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gradient">Groq AI Chat</h1>
-            <p className="text-sm text-neuro-500">Lightning-fast AI conversations</p>
+            <h1 className="text-xl font-bold text-gradient">Kyartu Vzgo</h1>
+            <p className="text-sm text-neuro-500">Glendale's loudest. Armenia's proudest. Your ego's worst enemy</p>
           </div>
         </div>
         
@@ -792,10 +792,10 @@ function App() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
-              className={`text-xs px-3 py-1 rounded-full neuro-button transition-colors ${
+              className={`text-xs px-3 py-1 rounded-full transition-colors ${
                 isDeepSearchEnabled 
-                  ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
-                  : 'text-neuro-500 hover:text-neuro-700'
+                  ? 'text-white gradient-primary shadow-lg' 
+                  : 'text-neuro-500 hover:text-neuro-700 neuro-button'
               }`}
             >
               🔍 Deep Search
