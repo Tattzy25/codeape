@@ -12,7 +12,7 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 ### 🚀 **Lightning Fast AI**
 - Powered by Groq's high-performance AI models
 - Real-time streaming responses
-- Multiple model selection (Llama 3, Mixtral, Gemma)
+- Multiple model selection (Llama 4 Scout, Llama 4 Maverick)
 - Optimized for speed and efficiency
 
 ### 🎨 **Modern UI/UX**
@@ -33,7 +33,8 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 - Adjustable AI parameters (temperature, max tokens, top-p)
 - Model selection and switching
 - Conversation settings
-- Export/Import chat history
+- Export/Import chat history with JSZip compression
+- Bulk conversation management
 
 ### 🔒 **Secure & Private**
 - API keys stored locally in browser
@@ -52,8 +53,8 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/groq-ai-chatbot.git
-   cd groq-ai-chatbot
+   git clone https://github.com/Tattzy25/codeape.git
+   cd codeape
    ```
 
 2. **Install dependencies**
@@ -82,17 +83,15 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 
 | Model | Description | Max Tokens | Speed | Best For |
 |-------|-------------|------------|-------|----------|
-| **Llama 3 8B** | Fast and efficient | 8,192 | ⚡ Very Fast | General conversations |
-| **Llama 3 70B** | More capable | 8,192 | ⚡ Fast | Complex reasoning |
-| **Mixtral 8x7B** | Expert analysis | 32,768 | ⚡ Fast | Long-form content |
-| **Gemma 7B** | Google's efficient model | 8,192 | ⚡ Very Fast | Quick responses |
+| **Llama 4 Scout 17B** | Advanced scouting and exploration capabilities | 5,000 | ⚡ Fast | Scout & Analysis |
+| **Llama 4 Maverick 17B** | Innovative and creative problem solving | 5,000 | ⚡ Fast | Creative Reasoning |
 
 ## ⚙️ Configuration
 
 ### AI Settings
 
 - **Temperature** (0.0 - 2.0): Controls creativity vs consistency
-- **Max Tokens** (256 - 32,768): Maximum response length
+- **Max Tokens** (256 - 5,000): Maximum response length
 - **Top P** (0.1 - 1.0): Controls response diversity
 - **Streaming**: Real-time response generation
 
@@ -103,9 +102,9 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 VITE_GROQ_API_KEY=your_api_key
 
 # Optional
-VITE_DEFAULT_MODEL=llama3-8b-8192
+VITE_DEFAULT_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 VITE_DEFAULT_TEMPERATURE=0.7
-VITE_DEFAULT_MAX_TOKENS=1024
+VITE_DEFAULT_MAX_TOKENS=5000
 VITE_APP_NAME="Your App Name"
 ```
 
@@ -182,10 +181,11 @@ npm run lint     # Run ESLint
 - **Icons**: Lucide React for beautiful icons
 - **Markdown**: React Markdown with syntax highlighting
 - **PWA**: Vite PWA plugin for offline capability
+- **File Compression**: JSZip for chat export/import functionality
 
 ### Code Quality
 
-- **ESLint**: Code linting and formatting
+- **ESLint**: Code linting and formatting (v9 with flat config)
 - **Prettier**: Code formatting (coming soon)
 - **TypeScript**: Type safety (migration planned)
 - **Testing**: Jest + React Testing Library (coming soon)
@@ -325,7 +325,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [ ] **File Upload** - Document and image analysis
 - [ ] **Multi-language** - Internationalization support
 - [ ] **Custom Themes** - User-defined color schemes
-- [ ] **Chat Export** - PDF, Markdown, and JSON export
+- [x] **Chat Export** - ZIP archive export with JSZip
+- [ ] **Enhanced Export** - PDF, Markdown formats
 
 ### Version 2.1
 - [ ] **Conversation Branching** - Multiple conversation threads
@@ -357,8 +358,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: [docs.groq-chatbot.com](https://docs.groq-chatbot.com)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/groq-ai-chatbot/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/groq-ai-chatbot/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Tattzy25/codeape/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Tattzy25/codeape/discussions)
 - **Email**: support@groq-chatbot.com
 
 ## 🌟 Show Your Support
@@ -373,6 +374,6 @@ If you like this project, please consider:
 
 ---
 
-**Built with ❤️ by [Avi](https://github.com/yourusername) using Groq's amazing AI technology**
+**Built with ❤️ by [Avi](https://github.com/Tattzy25) using Groq's amazing AI technology**
 
 *Experience the future of AI conversations today!*# codeape
