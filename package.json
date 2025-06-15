@@ -24,7 +24,8 @@
     "react-syntax-highlighter": "^15.5.0",
     "jszip": "^3.10.1",
     "@vercel/analytics": "^1.1.1",
-    "@upstash/redis": "^1.25.1"
+    "@upstash/redis": "^1.25.1",
+    "tavily": "^1.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",

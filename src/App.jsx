@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Settings, Zap, MessageCircle, Sparkles, Upload, FileText, Download, RefreshCw, CheckCircle, Menu, Copy, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -12,6 +12,7 @@ import TypingIndicator from './components/TypingIndicator'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
+import tavilyService from './services/tavilyService'
 
 // Local storage keys
 const STORAGE_KEYS = {
@@ -94,7 +95,7 @@ function App() {
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: '👋 Welcome to Groq AI Chat! I\'m powered by lightning-fast AI models. How can I help you today?',
+          content: '👋 Welcome to Groq AI Chat! I\'m powered by lightning-fast AI models and web search capabilities.\n\n**Available Commands:**\n- Regular chat: Just type your message\n- Web search: `/search [query]`, `/web [query]`, or `/tavily [query]`\n\nHow can I help you today?',
           timestamp: new Date().toISOString()
         }])
       }
@@ -191,6 +192,42 @@ function App() {
       // Create abort controller for cancellation
       abortControllerRef.current = new AbortController()
 
+      // Check if this is a search command
+      const searchCommands = ['/search', '/web', '/tavily'];
+      const isSearchCommand = searchCommands.some(cmd => userMessage.content.toLowerCase().startsWith(cmd));
+      
+      if (isSearchCommand) {
+        // Extract search query (remove command prefix)
+        const searchQuery = userMessage.content.replace(/^\/(search|web|tavily)\s*/i, '').trim();
+        
+        if (!searchQuery) {
+          throw new Error('Please provide a search query. Example: /search renewable energy benefits');
+        }
+
+        // Perform Tavily search
+        setStreamingMessage('🔍 Searching the web...');
+        const searchResults = await tavilyService.search(searchQuery);
+        
+        // Format search results
+        const formattedResults = tavilyService.formatResults(searchResults);
+        
+        // Create AI response with search results
+        const aiMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: formattedResults.formatted,
+          timestamp: new Date().toISOString(),
+          isSearchResult: true,
+          searchQuery: searchQuery,
+          resultCount: formattedResults.resultCount
+        };
+
+        const finalMessages = [...newMessages, aiMessage];
+        setMessages(finalMessages);
+        saveToStorage(STORAGE_KEYS.CHAT_HISTORY, finalMessages);
+        return;
+      }
+
       // Prepare conversation history
       const conversationHistory = newMessages.map(msg => ({
         role: msg.role,
@@ -263,7 +300,7 @@ function App() {
     setMessages([{
       id: 'welcome',
       role: 'assistant',
-      content: '👋 Chat cleared! How can I help you today?',
+      content: '👋 Chat cleared! I\'m powered by lightning-fast AI models and web search capabilities.\n\n**Available Commands:**\n- Regular chat: Just type your message\n- Web search: `/search [query]`, `/web [query]`, or `/tavily [query]`\n\nHow can I help you today?',
       timestamp: new Date().toISOString()
     }])
     localStorage.removeItem(STORAGE_KEYS.CHAT_HISTORY)
