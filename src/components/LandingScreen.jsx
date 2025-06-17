@@ -12,7 +12,7 @@ const GENDER_OPTIONS = [
   { value: 'neutral', label: 'Galuboy' },
 ];
 
-const LandingScreen = ({ onStartChat }) => {
+const LandingScreen = ({ onStartChat, onStartPhoneCall }) => {
   const [name, setName] = useState('');
   const [gender, setGender] = useState('neutral');
   const [showForm, setShowForm] = useState(false);
@@ -100,7 +100,10 @@ const LandingScreen = ({ onStartChat }) => {
               
               {/* Responsive Button Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <NeumorphicButton className="h-20 rounded-2xl">
+                <NeumorphicButton 
+                  className="h-20 rounded-2xl" 
+                  onClick={onStartPhoneCall}
+                >
                   <div className="flex flex-col items-center gap-2">
                     <Phone className="w-6 h-6" />
                     <span className="text-xs font-medium">Call Kyartu Ara</span>

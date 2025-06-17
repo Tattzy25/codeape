@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp } from 'lucide-react'
+import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp, Phone, Dice1, Star, Users, Cigarette, Shield } from 'lucide-react'
+import NeumorphicButton from './GoldenButton'
 
 const Sidebar = ({ 
   isOpen = true, 
@@ -11,7 +12,8 @@ const Sidebar = ({
   savedMoments, 
   userName,
   onSelectChat,
-  onToggleMoment 
+  onToggleMoment,
+  onStartPhoneCall
 }) => {
   const getMoodIcon = (mood) => {
     const moodIcons = {
@@ -115,6 +117,75 @@ const Sidebar = ({
                 <p className="text-xs text-neuro-500">
                   Gain respect by taking roasts like a champ and matching his energy
                 </p>
+              </div>
+            </div>
+
+            {/* Kyartu's Services */}
+            <div className="p-6 border-b border-neuro-300">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageCircle className="w-5 h-5 text-blue-500" />
+                <h3 className="font-bold text-neuro-700">Kyartu's Services</h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <NeumorphicButton 
+                   className="h-16 rounded-xl"
+                   onClick={onStartPhoneCall}
+                 >
+                   <div className="flex flex-col items-center gap-1">
+                     <Phone className="w-5 h-5" />
+                     <span className="text-xs font-medium text-center">Call Kyartu Ara</span>
+                   </div>
+                 </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <Dice1 className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">Hit the Slots Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <Star className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">Make Me Famous Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <Users className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">You're Hired Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <Cigarette className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">Smoke & Roast Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">Marriage Advice Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <Shield className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">Give Me Alibi Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-16 rounded-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <Heart className="w-5 h-5" />
+                    <span className="text-xs font-medium text-center">Find Me Forever Man/Wife</span>
+                  </div>
+                </NeumorphicButton>
               </div>
             </div>
 
