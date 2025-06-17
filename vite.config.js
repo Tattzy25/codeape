@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'codamina',
-        short_name: 'codamina',
+        name: 'kyartu Vzgo',
+        short_name: 'kyartu Vzgo',
         description: 'Revolutionary AI-powered chatbot with lightning-fast responses',
         theme_color: '#667eea',
         background_color: '#e0e5ec',

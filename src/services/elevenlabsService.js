@@ -1,6 +1,6 @@
 class ElevenLabsService {
   constructor() {
-    this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY || process.env.ELEVENLABS_API_KEY;
+    this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
     this.baseUrl = 'https://api.elevenlabs.io/v1';
     this.defaultVoiceId = 'pNInz6obpgDQGcFmaJgB'; // Adam voice
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import './App.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Settings, Zap, MessageCircle, Sparkles, Upload, FileText, Download, RefreshCw, CheckCircle, Menu, Copy, X } from 'lucide-react'
 import toast from 'react-hot-toast'

@@ -1,6 +1,6 @@
 // Chat service for managing AI chat operations
-import { groqService } from './groqService'
-import { tavilyService } from './tavilyService'
+import groqService from './groqService'
+import tavilyService from './tavilyService'
 
 export const chatService = {
   apiKey: null,
