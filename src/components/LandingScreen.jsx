@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, Sparkles, Zap } from 'lucide-react';
+import { MessageCircle, Sparkles, Zap, Dice1, Star, Phone, Users, Cigarette, Heart, Shield } from 'lucide-react';
 import PropTypes from 'prop-types';
+import NeumorphicButton from './GoldenButton';
+
+
 
 const GENDER_OPTIONS = [
   { value: 'male', label: 'Ape Ape' },
@@ -16,14 +19,8 @@ const LandingScreen = ({ onStartChat }) => {
   const inputRef = useRef(null);
 
   const handleStartChat = () => {
-    if (!showForm) {
-      setShowForm(true);
-      return;
-    }
-
-    if (name.trim()) {
-      onStartChat(name.trim(), gender);
-    }
+    // Skip the form and go directly to chat with default values
+    onStartChat('User', 'neutral');
   };
 
   const getWelcomeMessage = () => {
@@ -60,7 +57,7 @@ const LandingScreen = ({ onStartChat }) => {
         >
           <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden neuro-card">
             <img
-              src="/kyartu-profile.png"
+              src="https://i.imgur.com/DwB35OG.png"
               alt="Kyartu Vzgo"
               className="w-full h-full object-cover"
             />
@@ -78,25 +75,88 @@ const LandingScreen = ({ onStartChat }) => {
             <Sparkles className="w-5 h-5 text-purple-500" />
           </div>
 
+
+
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-xl text-neuro-700 mb-8 leading-relaxed"
+            className="text-sm text-neuro-500 mb-6 italic"
           >
-            "Araaa… finally. You look stressed. Sit down. Let's ruin your self-esteem together."
+            "He's not a therapist. He just talks like your uncle."
           </motion.p>
 
           {!showForm ? (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleStartChat}
-              className="neuro-button-primary text-lg px-8 py-4 flex items-center gap-3 mx-auto"
-            >
-              <MessageCircle className="w-6 h-6" />
-              Start Chatting with Kyartu
-            </motion.button>
+            <div className="space-y-6">
+              {/* ArmoGPT - Main Button */}
+              <div className="mb-8">
+                <NeumorphicButton onClick={handleStartChat} className="h-16 text-lg font-bold">
+                  <div className="flex items-center gap-3 justify-center">
+                    <MessageCircle className="w-7 h-7" />
+                    Armo-GPT
+                  </div>
+                </NeumorphicButton>
+              </div>
+              
+              {/* Responsive Button Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Phone className="w-6 h-6" />
+                    <span className="text-xs font-medium">Call Kyartu Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Dice1 className="w-6 h-6" />
+                    <span className="text-xs font-medium">Hit the Slots Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Star className="w-6 h-6" />
+                    <span className="text-xs font-medium">Make Me Famous Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Users className="w-6 h-6" />
+                    <span className="text-xs font-medium">You're Hired Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Cigarette className="w-6 h-6" />
+                    <span className="text-xs font-medium">Smoke & Roast Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <MessageCircle className="w-6 h-6" />
+                    <span className="text-xs font-medium">Marriage Advice Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Shield className="w-6 h-6" />
+                    <span className="text-xs font-medium">Give Me Alibi Ara</span>
+                  </div>
+                </NeumorphicButton>
+                
+                <NeumorphicButton className="h-20 rounded-2xl">
+                  <div className="flex flex-col items-center gap-2">
+                    <Heart className="w-6 h-6" />
+                    <span className="text-xs font-medium">Find Me Forever Man/Wife</span>
+                  </div>
+                </NeumorphicButton>
+              </div>
+            </div>
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -141,27 +201,23 @@ const LandingScreen = ({ onStartChat }) => {
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <NeumorphicButton
                 onClick={handleStartChat}
                 disabled={!name.trim()}
-                className="neuro-button-primary text-lg px-8 py-4 flex items-center gap-3 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  opacity: !name.trim() ? 0.5 : 1,
+                  cursor: !name.trim() ? 'not-allowed' : 'pointer'
+                }}
               >
-                <MessageCircle className="w-6 h-6" />
-                Let's Go, {name || 'Stranger'}
-              </motion.button>
+                <div className="flex items-center gap-3 justify-center">
+                  <MessageCircle className="w-6 h-6" />
+                  Let's Go, {name || 'Stranger'}
+                </div>
+              </NeumorphicButton>
             </motion.div>
           )}
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-sm text-neuro-500 mt-6 italic"
-          >
-            "He's not a therapist. He just talks like your uncle."
-          </motion.p>
+
         </motion.div>
 
         {/* Preview Message */}
@@ -175,6 +231,8 @@ const LandingScreen = ({ onStartChat }) => {
             <p className="text-neuro-700 italic">{getWelcomeMessage()}</p>
           </motion.div>
         )}
+
+
       </motion.div>
     </div>
   );

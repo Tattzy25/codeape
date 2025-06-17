@@ -248,71 +248,7 @@ const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice }) =>
                 : 'chat-message-ai'
           }`}
         >
-          {/* Action buttons */}
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            {/* Voice playback for AI messages */}
-            {!isUser && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleVoicePlay}
-                disabled={isPlayingVoice}
-                className="p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 disabled:opacity-50"
-                title="Play voice"
-              >
-                <Volume2 className={`w-3 h-3 ${isPlayingVoice ? 'animate-pulse' : ''}`} />
-              </motion.button>
-            )}
-            
-            {/* Flashback icon for AI messages */}
-            {!isUser && message.content.includes('Armenia') && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                className="p-1 rounded-full bg-neuro-200/80 text-neuro-600"
-                title="Back in Armenia..."
-              >
-                <RotateCcw className="w-3 h-3" />
-              </motion.button>
-            )}
-            
-            {/* Bookmark for AI messages */}
-            {!isUser && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleBookmark}
-                className={`p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 ${
-                  isBookmarked ? 'text-yellow-600' : ''
-                }`}
-                title="Save moment"
-              >
-                <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-current' : ''}`} />
-              </motion.button>
-            )}
-            
-            {/* Copy button */}
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={copyToClipboard}
-              className="p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600"
-              title="Copy to clipboard"
-            >
-              {isCopied ? (
-                <Check className="w-3 h-3" />
-              ) : (
-                <Copy className="w-3 h-3" />
-              )}
-            </motion.button>
-          </div>
+
           {/* Message Text */}
           <div className={`prose prose-sm max-w-none ${
             isUser 
@@ -353,22 +289,76 @@ const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice }) =>
             <span>{timestamp}</span>
           </div>
 
-          {/* Usage Info for AI messages */}
-          {usage && (
-            <>
-              <span>•</span>
-              <div className="flex items-center gap-1" title={`Input: ${usage.input} | Output: ${usage.output}`}>
-                <span>{usage.total} tokens</span>
-              </div>
-            </>
-          )}
-
           {/* Mood indicator for Kyartu */}
           {!isUser && message.mood && (
             <>
               <span>•</span>
               <div className="flex items-center gap-1">
                 <span className="capitalize">{message.mood}</span>
+              </div>
+            </>
+          )}
+
+          {/* Action buttons moved here */}
+          {!isUser && (
+            <>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                {/* Voice playback for AI messages */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleVoicePlay}
+                  disabled={isPlayingVoice}
+                  className="p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 disabled:opacity-50"
+                  title="Play voice"
+                >
+                  <Volume2 className={`w-3 h-3 ${isPlayingVoice ? 'animate-pulse' : ''}`} />
+                </motion.button>
+                
+                {/* Bookmark for AI messages */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleBookmark}
+                  className={`p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600 ${
+                    isBookmarked ? 'text-yellow-600' : ''
+                  }`}
+                  title="Save moment"
+                >
+                  <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-current' : ''}`} />
+                </motion.button>
+                
+                {/* Copy button */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={copyToClipboard}
+                  className="p-1 rounded-full bg-neuro-200/80 hover:bg-neuro-300/80 text-neuro-600"
+                  title="Copy to clipboard"
+                >
+                  {isCopied ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </motion.button>
+              </div>
+            </>
+          )}
+
+          {/* Usage Info for AI messages */}
+          {usage && (
+            <>
+              <span>•</span>
+              <div className="flex items-center gap-1" title={`Input: ${usage.input} | Output: ${usage.output}`}>
+                <span>{usage.total} tokens</span>
               </div>
             </>
           )}

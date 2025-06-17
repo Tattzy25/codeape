@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Download, RefreshCw, Settings, Menu, X } from 'lucide-react'
+import { Upload, Download, RefreshCw, Settings, Menu, X, Brain } from 'lucide-react'
 
 const Header = ({
   uploadedFiles,
@@ -15,13 +15,15 @@ const Header = ({
   fileInputRef,
   handleFileUpload,
   kyartuMood = 'unbothered',
-  onToggleSidebar
+  onToggleSidebar,
+  showConversationInsights,
+  setShowConversationInsights
 }) => {
   return (
     <motion.header 
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="neuro-card m-4 mb-0 p-4 flex items-center justify-between relative z-20"
+      className="neuro-card mt-2 mb-0 px-4 py-2 flex items-center justify-between relative z-20"
     >
       <div className="flex items-center gap-3">
         <div className="flex-1">
@@ -50,6 +52,16 @@ const Header = ({
              title="Processing Options"
            >
              <RefreshCw className="w-4 h-4 text-neuro-600" />
+           </motion.button>
+           
+           <motion.button
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
+             onClick={() => setShowConversationInsights(!showConversationInsights)}
+             className={`neuro-button p-3 ${showConversationInsights ? 'bg-primary-500/20 border-primary-500/30' : ''}`}
+             title={showConversationInsights ? 'Hide Insights' : 'Show Insights'}
+           >
+             <Brain className="w-4 h-4 text-neuro-600" />
            </motion.button>
            
            <motion.button

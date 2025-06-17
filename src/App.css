@@ -15,9 +15,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
+/* Hidden scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -25,12 +26,21 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: none;
+}
+
+/* For IE and Edge */
+.custom-scrollbar {
+  -ms-overflow-style: none;
 }
 
 /* Mobile safe area */

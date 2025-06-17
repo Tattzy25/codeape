@@ -7,7 +7,7 @@ import JSZip from 'jszip'
 
 // Components
 import ChatMessage from './components/ChatMessage'
-import ApiKeyModal from './components/ApiKeyModal'
+// ApiKeyModal removed
 import SettingsModal from './components/SettingsModal'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
@@ -1056,13 +1056,7 @@ function App() {
       )}
 
       {/* Modals */}
-      <ApiKeyModal
-        isOpen={showApiKeyModal}
-        onClose={() => setShowApiKeyModal(false)}
-        onSubmit={handleApiKeySubmit}
-        isLoading={isLoading}
-        currentApiKey={apiKey}
-      />
+      {/* ApiKeyModal removed */}
       
       <SettingsModal
         isOpen={showSettingsModal}
