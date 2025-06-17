@@ -47,7 +47,7 @@ export const useAppState = () => {
   
   // Settings and features
   const [settings, setSettings] = useState({
-    model: 'llama-3.1-70b-versatile',
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     temperature: 0.7,
     maxTokens: 2048,
     voiceEnabled: false,

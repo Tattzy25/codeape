@@ -389,7 +389,7 @@ export const useChat = () => {
 // Hook for managing app settings
 export const useSettings = () => {
   const [settings, setSettings] = useLocalStorage('app_settings', {
-    model: 'llama-3.3-70b-versatile',
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     temperature: 0.7,
     maxTokens: 1024,
     topP: 1,
@@ -408,7 +408,7 @@ export const useSettings = () => {
 
   const resetSettings = useCallback(() => {
     setSettings({
-      model: 'llama-3.3-70b-versatile',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       temperature: 0.7,
       maxTokens: 1024,
       topP: 1,

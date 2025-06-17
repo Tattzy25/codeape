@@ -1,14 +1,34 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { chatService } from '../services/chatService'
 import { storageService } from '../services/storageService'
+import { memoryService } from '../services/memoryService'
 
 export const useChat = () => {
   const [messages, setMessages] = useState([])
   const [message, setMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
+  const [userId, setUserId] = useState(null)
+  const [sessionId, setSessionId] = useState(null)
   const messagesEndRef = useRef(null)
   const abortControllerRef = useRef(null)
+
+  // Generate or retrieve user ID
+  useEffect(() => {
+    let storedUserId = localStorage.getItem('kyartu_user_id')
+    if (!storedUserId) {
+      storedUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+      localStorage.setItem('kyartu_user_id', storedUserId)
+    }
+    setUserId(storedUserId)
+    
+    // Generate session ID for this chat session
+    const newSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    setSessionId(newSessionId)
+    
+    // Initialize memory service
+    memoryService.initialize()
+  }, [])
 
   // Load chat history on mount
   useEffect(() => {
@@ -52,6 +72,21 @@ export const useChat = () => {
     setIsTyping(true)
     setIsStreaming(true)
 
+    // Store user interaction in memory service
+    if (userId) {
+      try {
+        await memoryService.storeInteractionWithBehavior(
+          userId,
+          sessionId,
+          message.trim(),
+          '', // response will be filled when AI responds
+          'balanced' // default personality mode
+        )
+      } catch (error) {
+        console.error('Error storing interaction:', error)
+      }
+    }
+
     // Create abort controller for this request
     abortControllerRef.current = new AbortController()
 
@@ -73,10 +108,11 @@ export const useChat = () => {
         return
       }
 
-      // Regular chat message
+      // Regular chat message with user context
       const response = await chatService.sendMessage(
         [...messages, userMessage],
-        abortControllerRef.current.signal
+        abortControllerRef.current.signal,
+        userId
       )
 
       let assistantContent = ''

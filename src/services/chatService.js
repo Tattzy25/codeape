@@ -17,12 +17,12 @@ export const chatService = {
   },
 
   // Send message to AI
-  sendMessage: async (messages, settings, onChunk) => {
+  sendMessage: async (messages, settings, onChunk, userId = null) => {
     if (!groqService.isReady()) {
       throw new Error('API key not configured')
     }
 
-    return await groqService.sendMessage(messages, settings, onChunk)
+    return await groqService.sendMessage(messages, settings, onChunk, userId)
   },
 
   // Handle search commands

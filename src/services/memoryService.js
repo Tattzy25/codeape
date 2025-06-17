@@ -77,6 +77,46 @@ class MemoryService {
         )
       `;
       
+      // Jokes and comebacks table for reusable content
+      await this.sql`
+        CREATE TABLE IF NOT EXISTS kyartu_content (
+          id SERIAL PRIMARY KEY,
+          content_type VARCHAR(50) NOT NULL, -- 'joke', 'comeback', 'flex', 'story'
+          content TEXT NOT NULL,
+          context_tags JSONB, -- ['sad', 'roast', 'flex'] etc
+          effectiveness_score INTEGER DEFAULT 0,
+          usage_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          last_used TIMESTAMP
+        )
+      `;
+      
+      // User behavior patterns table
+      await this.sql`
+        CREATE TABLE IF NOT EXISTS user_behavior_patterns (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR(255) NOT NULL,
+          behavior_type VARCHAR(50) NOT NULL, -- 'joke_teller', 'complainer', 'flexer', 'questioner'
+          frequency INTEGER DEFAULT 1,
+          last_occurrence TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          context_data JSONB,
+          UNIQUE(user_id, behavior_type)
+        )
+      `;
+      
+      // Speaking style adaptations table
+      await this.sql`
+        CREATE TABLE IF NOT EXISTS speaking_adaptations (
+          id SERIAL PRIMARY KEY,
+          adaptation_type VARCHAR(50) NOT NULL, -- 'tone', 'vocabulary', 'response_style'
+          trigger_context JSONB, -- what triggers this adaptation
+          adaptation_content TEXT NOT NULL,
+          success_rate DECIMAL(3,2) DEFAULT 0.0,
+          usage_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      
       console.log('Memory service tables created successfully');
     } catch (error) {
       console.error('Error creating tables:', error);
@@ -157,32 +197,7 @@ class MemoryService {
     }
   }
 
-  // Store user interaction
-  async storeInteraction(userId, message, sessionId = null) {
-    const emotion = this.analyzeEmotion(message);
-    const respectLevel = this.analyzeRespectLevel(message);
-    const personalityMode = this.determinePersonalityMode(emotion, respectLevel);
-    
-    // Store in database if available, otherwise use localStorage
-    if (this.isInitialized && this.sql) {
-      try {
-        await this.sql`
-          INSERT INTO user_interactions (user_id, message, emotion, respect_level, personality_mode, session_id)
-          VALUES (${userId}, ${message}, ${emotion}, ${respectLevel}, ${personalityMode}, ${sessionId})
-        `;
-      } catch (error) {
-        console.error('Error storing interaction:', error);
-        this.storeInteractionLocally(userId, { message, emotion, respectLevel, personalityMode, timestamp: new Date().toISOString() });
-      }
-    } else {
-      this.storeInteractionLocally(userId, { message, emotion, respectLevel, personalityMode, timestamp: new Date().toISOString() });
-    }
-    
-    // Update conversation insights
-    await this.updateConversationInsights(userId);
-    
-    return { emotion, respectLevel, personalityMode };
-  }
+
 
   // Store interaction locally as fallback
   storeInteractionLocally(userId, interaction) {
@@ -309,20 +324,233 @@ class MemoryService {
     }
   }
 
+  // Store reusable content (jokes, comebacks, etc.)
+  async storeKyartuContent(contentType, content, contextTags = []) {
+    if (!this.isInitialized || !this.sql) return;
+    
+    try {
+      await this.sql`
+        INSERT INTO kyartu_content (content_type, content, context_tags)
+        VALUES (${contentType}, ${content}, ${JSON.stringify(contextTags)})
+      `;
+    } catch (error) {
+      console.error('Error storing Kyartu content:', error);
+    }
+  }
+  
+  // Get relevant content based on context
+  async getRelevantContent(contentType, contextTags = []) {
+    if (!this.isInitialized || !this.sql) return [];
+    
+    try {
+      const result = await this.sql`
+        SELECT content, effectiveness_score, usage_count 
+        FROM kyartu_content 
+        WHERE content_type = ${contentType}
+        AND (context_tags ?| ${contextTags} OR context_tags = '[]'::jsonb)
+        ORDER BY effectiveness_score DESC, usage_count ASC
+        LIMIT 5
+      `;
+      return result;
+    } catch (error) {
+      console.error('Error getting relevant content:', error);
+      return [];
+    }
+  }
+  
+  // Track user behavior patterns
+  async trackBehaviorPattern(userId, behaviorType, contextData = {}) {
+    if (!this.isInitialized || !this.sql) return;
+    
+    try {
+      await this.sql`
+        INSERT INTO user_behavior_patterns (user_id, behavior_type, context_data)
+        VALUES (${userId}, ${behaviorType}, ${JSON.stringify(contextData)})
+        ON CONFLICT (user_id, behavior_type)
+        DO UPDATE SET 
+          frequency = user_behavior_patterns.frequency + 1,
+          last_occurrence = CURRENT_TIMESTAMP,
+          context_data = ${JSON.stringify(contextData)}
+      `;
+    } catch (error) {
+      console.error('Error tracking behavior pattern:', error);
+    }
+  }
+  
+  // Get user behavior patterns
+  async getUserBehaviorPatterns(userId) {
+    if (!this.isInitialized || !this.sql) return [];
+    
+    try {
+      const result = await this.sql`
+        SELECT behavior_type, frequency, context_data, last_occurrence
+        FROM user_behavior_patterns 
+        WHERE user_id = ${userId}
+        ORDER BY frequency DESC
+      `;
+      return result;
+    } catch (error) {
+      console.error('Error getting behavior patterns:', error);
+      return [];
+    }
+  }
+  
+  // Analyze message for specific behaviors
+  analyzeBehaviors(message) {
+    const lowerMessage = message.toLowerCase();
+    const behaviors = [];
+    
+    // Detect joke telling
+    if (lowerMessage.includes('joke') || lowerMessage.includes('funny') || 
+        lowerMessage.includes('haha') || lowerMessage.includes('lol')) {
+      behaviors.push({ type: 'joke_teller', context: { humor_type: 'general' } });
+    }
+    
+    // Detect complaining
+    if (lowerMessage.includes('hate') || lowerMessage.includes('annoying') || 
+        lowerMessage.includes('stupid') || lowerMessage.includes('worst')) {
+      behaviors.push({ type: 'complainer', context: { complaint_intensity: 'high' } });
+    }
+    
+    // Detect flexing
+    if (lowerMessage.includes('my') && (lowerMessage.includes('car') || lowerMessage.includes('money') || 
+        lowerMessage.includes('house') || lowerMessage.includes('job'))) {
+      behaviors.push({ type: 'flexer', context: { flex_category: 'material' } });
+    }
+    
+    // Detect questioning
+    if (message.includes('?') || lowerMessage.startsWith('how') || 
+        lowerMessage.startsWith('what') || lowerMessage.startsWith('why')) {
+      behaviors.push({ type: 'questioner', context: { question_type: 'general' } });
+    }
+    
+    return behaviors;
+  }
+  
+  // Enhanced store interaction with behavior tracking
+  async storeInteraction(userId, message, sessionId = null) {
+    const emotion = this.analyzeEmotion(message);
+    const respectLevel = this.analyzeRespectLevel(message);
+    const personalityMode = this.determinePersonalityMode(emotion, respectLevel);
+    const behaviors = this.analyzeBehaviors(message);
+    
+    // Store in database if available, otherwise use localStorage
+    if (this.isInitialized && this.sql) {
+      try {
+        await this.sql`
+          INSERT INTO user_interactions (user_id, message, emotion, respect_level, personality_mode, session_id)
+          VALUES (${userId}, ${message}, ${emotion}, ${respectLevel}, ${personalityMode}, ${sessionId})
+        `;
+        
+        // Track behavior patterns
+        for (const behavior of behaviors) {
+          await this.trackBehaviorPattern(userId, behavior.type, behavior.context);
+        }
+      } catch (error) {
+        console.error('Error storing interaction:', error);
+        this.storeInteractionLocally(userId, { message, emotion, respectLevel, personalityMode, timestamp: new Date().toISOString() });
+      }
+    } else {
+      this.storeInteractionLocally(userId, { message, emotion, respectLevel, personalityMode, timestamp: new Date().toISOString() });
+    }
+    
+    // Update conversation insights
+    await this.updateConversationInsights(userId);
+    
+    return { emotion, respectLevel, personalityMode, behaviors };
+  }
+
+  // Analyze Armenian cultural elements in conversation
+   analyzeCulturalElements(userMessage, aiResponse) {
+     const elements = [];
+     const lowerMessage = userMessage.toLowerCase();
+     const lowerResponse = aiResponse.toLowerCase();
+     
+     // Detect Armenian slang usage in user message
+     const armenianSlang = ['ara', 'gyot', 'chato', 'bro jan', 'lav eli', 'aper', 'axchik', 'jan', 'vor', 'inch ka', 'vonts es', 'tsavt tanem', 'txa', 'bozi txa', 'vor anes', 'esh'];
+     for (const slang of armenianSlang) {
+       if (lowerMessage.includes(slang)) {
+         elements.push({ 
+           type: 'slang_usage', 
+           content: `User used: ${slang}`, 
+           tags: ['armenian', 'slang', 'user_learning'] 
+         });
+       }
+     }
+     
+     // Detect Armenian language usage
+     if (lowerMessage.includes('ապրես') || lowerMessage.includes('բարև') || 
+         lowerMessage.includes('շնորհակալություն') || lowerMessage.includes('ինչ կա') ||
+         lowerMessage.includes('ոնց ես') || lowerMessage.includes('ծավտ տանեմ')) {
+       elements.push({ 
+         type: 'cultural_phrase', 
+         content: userMessage, 
+         tags: ['armenian', 'language', 'cultural'] 
+       });
+     }
+     
+     // Detect cultural references
+     if (lowerMessage.includes('armenia') || lowerMessage.includes('armenian') ||
+         lowerMessage.includes('yerevan') || lowerMessage.includes('ararat') ||
+         lowerMessage.includes('glendale') || lowerMessage.includes('dolma') ||
+         lowerMessage.includes('hookah') || lowerMessage.includes('lavash')) {
+       elements.push({ 
+         type: 'cultural_reference', 
+         content: userMessage, 
+         tags: ['armenian', 'cultural', 'reference'] 
+       });
+     }
+     
+     // Detect successful roasts/comebacks in AI response
+     if (lowerResponse.includes('savage') || lowerResponse.includes('roast') ||
+         lowerResponse.includes('flex') || lowerResponse.includes('txa')) {
+       elements.push({ 
+         type: 'successful_roast', 
+         content: aiResponse, 
+         tags: ['roast', 'savage', 'effective'] 
+       });
+     }
+     
+     // Detect cultural food references
+     const armenianFood = ['dolma', 'lavash', 'kebab', 'pilaf', 'baklava', 'lahmajoun', 'manti'];
+     for (const food of armenianFood) {
+       if (lowerMessage.includes(food) || lowerResponse.includes(food)) {
+         elements.push({ 
+           type: 'cultural_food', 
+           content: `Food reference: ${food}`, 
+           tags: ['armenian', 'food', 'cultural'] 
+         });
+       }
+     }
+     
+     return elements;
+   }
+
   // Generate context for dynamic prompts
   async generateContext(userId, messageHistory = []) {
     const insights = await this.getConversationInsights(userId);
+    const behaviorPatterns = await this.getUserBehaviorPatterns(userId);
     const recentEmotion = messageHistory.length > 0 ? 
       this.analyzeEmotion(messageHistory[messageHistory.length - 1].content) : 'neutral';
     const recentRespectLevel = messageHistory.length > 0 ? 
       this.analyzeRespectLevel(messageHistory[messageHistory.length - 1].content) : 'medium';
     
+    // Get relevant content suggestions
+    const contextTags = [recentEmotion, recentRespectLevel];
+    const relevantJokes = await this.getRelevantContent('joke', contextTags);
+    const relevantComebacks = await this.getRelevantContent('comeback', contextTags);
+    
     return {
       userInsights: insights,
+      behaviorPatterns: behaviorPatterns,
       currentEmotion: recentEmotion,
       currentRespectLevel: recentRespectLevel,
       personalityMode: this.determinePersonalityMode(recentEmotion, recentRespectLevel, messageHistory),
-      conversationLength: messageHistory.length
+      conversationLength: messageHistory.length,
+      suggestedContent: {
+        jokes: relevantJokes,
+        comebacks: relevantComebacks
+      }
     };
   }
 }

@@ -305,7 +305,7 @@ export const API_ENDPOINTS = {
 };
 
 export const DEFAULT_SETTINGS = {
-  model: 'llama-3.3-70b-versatile',
+  model: 'meta-llama/llama-4-scout-17b-16e-instruct',
   temperature: 0.7,
   maxTokens: 1024,
   topP: 1,
