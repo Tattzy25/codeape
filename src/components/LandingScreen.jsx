@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Sparkles, Zap } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 const GENDER_OPTIONS = [
-  { value: 'male', label: 'Bro' },
-  { value: 'female', label: 'Queen' },
-  { value: 'neutral', label: 'Human' },
+  { value: 'male', label: 'Ape Ape' },
+  { value: 'female', label: 'Kukla' },
+  { value: 'neutral', label: 'Galuboy' },
 ];
 
 const LandingScreen = ({ onStartChat }) => {

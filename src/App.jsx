@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Settings, Zap, MessageCircle, Sparkles, Upload, FileText, Download, RefreshCw, CheckCircle, Menu, Copy, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -16,12 +16,11 @@ import Header from './components/Header'
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
 import redisService from './services/redisService'
-import StorageService from './services/storageService'
-import TavilyService from './services/tavilyService'
+import { storageService } from './services/storageService'
+import tavilyService from './services/tavilyService'
 import elevenlabsService from './services/elevenlabsService'
 
 // Initialize services
-const tavilyService = new TavilyService();
 
 
 // Constants
@@ -356,7 +355,7 @@ function App() {
     setMessages(finalMessages);
     
     await saveMessageAndUpdateState(finalMessages, messageAnalysis, userMessage);
-  }, [settings, kyartuMood, analyzeUserMessage, setStreamingMessage, setMessages, prepareConversationHistory, saveMessageAndUpdateState]);
+  }, [settings, kyartuMood, analyzeUserMessage, setStreamingMessage, setMessages, prepareConversationHistory]);
 
   // Save message and update Kyartu state
   const saveMessageAndUpdateState = useCallback(async (finalMessages, messageAnalysis, userMessage) => {
