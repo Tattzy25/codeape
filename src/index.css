@@ -161,6 +161,40 @@
   .mobile-padding {
     @apply px-4 sm:px-6 lg:px-8;
   }
+  
+  /* Sticky Layout Utilities */
+  .sticky-header {
+    @apply sticky top-0 z-30 bg-neuro-base/95;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  
+  .sticky-sidebar {
+    @apply sticky top-0 h-screen overflow-y-auto;
+  }
+  
+  .sticky-input {
+    @apply sticky bottom-0 bg-neuro-base/95 border-t border-neuro-200;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Mobile Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .chat-container {
+      @apply h-[calc(100vh-140px)];
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-chat-height {
+      @apply h-[calc(100vh-120px)];
+    }
+    
+    .mobile-input-padding {
+      @apply p-3;
+    }
+  }
 }
 
 /* Accessibility */
