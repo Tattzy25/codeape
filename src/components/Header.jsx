@@ -23,21 +23,12 @@ const Header = ({
     <motion.header 
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="neuro-card mt-2 mb-0 px-4 py-2 flex items-center justify-between relative z-20"
+      className="sticky top-0 neuro-card mt-2 mb-0 px-4 py-2 flex items-center justify-between relative z-20 max-w-4xl mx-auto"
     >
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gradient">Kyartu Vzgo</h1>
           <p className="text-sm text-neuro-500">Glendale's loudest. Armenia's proudest. Your ego's worst enemy.</p>
-        </div>
-        
-        {/* Mood Status Chip */}
-        <div className="hidden md:flex items-center gap-2 neuro-card px-3 py-1">
-          <span className="text-lg">{kyartuMood === 'unbothered' ? '😌' : '💢'}</span>
-          <div className="text-xs">
-            <p className="text-neuro-600 font-medium">Mood:</p>
-            <p className="text-neuro-500 capitalize">{kyartuMood}</p>
-          </div>
         </div>
       </div>
       

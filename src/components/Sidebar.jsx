@@ -54,7 +54,7 @@ const Sidebar = ({
         animate={{ x: 0 }}
         exit={{ x: -300 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed lg:static left-0 top-0 h-full w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
+        className="fixed lg:sticky lg:top-4 left-0 top-0 h-full lg:h-[calc(100vh-2rem)] w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
       >
         {/* Header */}
         <div className="p-6 border-b border-neuro-300">
