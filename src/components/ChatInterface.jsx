@@ -29,12 +29,7 @@ const ChatInterface = ({
 }) => {
   return (
     <div className="h-screen flex flex-col lg:ml-80">
-      {/* Logo in top left corner */}
-      <div className="absolute top-4 lg:left-[21rem] left-4 z-40">
-        <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
-          <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
-        </div>
-      </div>
+
 
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">

@@ -2,7 +2,7 @@ class ElevenLabsService {
   constructor() {
     this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
     this.baseUrl = 'https://api.elevenlabs.io/v1';
-    this.defaultVoiceId = 'pNInz6obpgDQGcFmaJgB'; // Adam voice
+    this.defaultVoiceId = import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'cEOAFYYd4CZK41v4bLEb'; // Updated voice
   }
 
   async synthesizeSpeech(text, voiceId = this.defaultVoiceId) {

@@ -13,7 +13,14 @@ export const useApiKey = () => {
       setApiKey(savedApiKey)
       chatService.setApiKey(savedApiKey)
     } else {
-      setShowApiKeyModal(true)
+      // Check for environment API key
+      const envApiKey = import.meta.env.VITE_GROQ_API_KEY
+      if (envApiKey) {
+        setApiKey(envApiKey)
+        chatService.setApiKey(envApiKey)
+      } else {
+        console.warn('No API key found in storage or environment')
+      }
     }
   }, [])
 
@@ -46,9 +53,17 @@ export const useApiKey = () => {
   // Clear API key
   const clearApiKey = useCallback(() => {
     setApiKey('')
-    storageService.clearApiKey()
+    storageService.removeApiKey()
     chatService.setApiKey('')
-    setShowApiKeyModal(true)
+    // Check if environment API key is available as fallback
+    const envApiKey = import.meta.env.VITE_GROQ_API_KEY
+    if (envApiKey) {
+      setApiKey(envApiKey)
+      chatService.setApiKey(envApiKey)
+      console.log('Reverted to environment API key')
+    } else {
+      console.warn('API key cleared - no fallback available')
+    }
   }, [])
 
   // Check if API key is valid

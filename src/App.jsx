@@ -7,7 +7,7 @@ import JSZip from 'jszip'
 
 // Components
 import ChatMessage from './components/ChatMessage'
-import ApiKeyModal from './components/ApiKeyModal'
+
 import SettingsModal from './components/SettingsModal'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
@@ -128,7 +128,15 @@ function App() {
         groqService.initialize(savedApiKey)
         setShowApiKeyModal(false)
       } else {
-        setShowApiKeyModal(true)
+        // Check for environment API key
+        const envApiKey = import.meta.env.VITE_GROQ_API_KEY
+        if (envApiKey) {
+          setApiKey(envApiKey)
+          groqService.initialize(envApiKey)
+          setShowApiKeyModal(false)
+        } else {
+          console.warn('No API key found in storage or environment')
+        }
       }
 
       // Load user preferences from Redis
@@ -258,9 +266,11 @@ function App() {
     const envApiKey = import.meta.env.VITE_GROQ_API_KEY
     if (envApiKey) {
       setApiKey(envApiKey)
+      groqService.initialize(envApiKey)
       setShowApiKeyModal(false)
     } else if (!apiKey) {
-      setShowApiKeyModal(true)
+      // No environment API key found - users would need to provide their own
+      console.warn('No API key configured')
     }
   }, [apiKey])
 
@@ -400,7 +410,7 @@ function App() {
     if (!inputMessage.trim() || isLoading) return;
     
     if (!groqService.isReady()) {
-      setShowApiKeyModal(true);
+      console.warn('Groq service not ready - please check API key configuration');
       return;
     }
 
@@ -867,12 +877,7 @@ function App() {
 
           {/* Main App Layout */}
           <div className="flex flex-1 gap-4 p-4 pt-0">
-            {/* Logo in top left corner */}
-            <div className="absolute top-4 left-4 z-30">
-              <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
-                <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
-              </div>
-            </div>
+
 
             {/* Permanent Sidebar for Desktop, Toggle for Mobile */}
             <div className="hidden lg:block w-80 flex-shrink-0">
@@ -973,29 +978,6 @@ function App() {
                   </div>
                   
                   <div className="flex gap-2">
-                    {/* Upload Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={triggerFileUpload}
-                      className="neuro-button-secondary px-4 py-3"
-                      title="Upload Files"
-                    >
-                      <Upload className="w-4 h-4" />
-                    </motion.button>
-                    
-                    {/* Mobile Sidebar Toggle */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={handleToggleSidebar}
-                      className="neuro-button-secondary px-4 py-3 lg:hidden"
-                      title="Toggle Sidebar"
-                    >
-                      <Menu className="w-4 h-4" />
-                    </motion.button>
                     
                     {isLoading ? (
                       <motion.button
@@ -1056,13 +1038,7 @@ function App() {
       )}
 
       {/* Modals */}
-      <ApiKeyModal
-        isOpen={showApiKeyModal}
-        onClose={() => setShowApiKeyModal(false)}
-        onSubmit={handleApiKeySubmit}
-        isLoading={isLoading}
-        currentApiKey={apiKey}
-      />
+
       
       <SettingsModal
         isOpen={showSettingsModal}

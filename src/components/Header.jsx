@@ -38,6 +38,16 @@ const Header = ({
            <motion.button
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
+             onClick={triggerFileUpload}
+             className="neuro-button p-3"
+             title="Upload Files"
+           >
+             <Upload className="w-4 h-4 text-neuro-600" />
+           </motion.button>
+           
+           <motion.button
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
              onClick={() => setShowProcessingModal(true)}
              className="neuro-button p-3"
              title="Processing Options"
@@ -102,6 +112,32 @@ const Header = ({
                   className="absolute right-0 top-full mt-2 w-48 neuro-card p-2 z-50 shadow-lg border border-neuro-300"
                 >
                   <div className="space-y-1">
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      triggerFileUpload()
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
+                  >
+                    <Upload className="w-4 h-4 text-neuro-600" />
+                    <span className="text-neuro-700 text-sm">Upload Files</span>
+                  </motion.button>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onToggleSidebar()
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full flex items-center gap-3 p-2 text-left hover:bg-neuro-100 rounded-lg transition-colors"
+                  >
+                    <Menu className="w-4 h-4 text-neuro-600" />
+                    <span className="text-neuro-700 text-sm">Toggle Sidebar</span>
+                  </motion.button>
                   
                   <motion.button
                     whileHover={{ scale: 1.02 }}
