@@ -2,7 +2,7 @@ class ElevenLabsService {
   constructor() {
     this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
     this.baseUrl = 'https://api.elevenlabs.io/v1';
-    this.defaultVoiceId = import.meta.env.VITE_ELEVENLABS_VOICE_ID || 'cEOAFYYd4CZK41v4bLEb'; // Updated voice
+    this.defaultVoiceId = 'pNInz6obpgDQGcFmaJgB'; // Adam voice
   }
 
   async synthesizeSpeech(text, voiceId = this.defaultVoiceId) {
@@ -99,79 +99,6 @@ class ElevenLabsService {
       console.error('Failed to get voices:', error);
       throw error;
     }
-  }
-
-  // Speech-to-text using ElevenLabs
-  async speechToText(audioBlob) {
-    if (!this.apiKey) {
-      throw new Error('ElevenLabs API key not found');
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'audio.wav');
-      formData.append('model', 'eleven_multilingual_v2');
-
-      const response = await fetch(`${this.baseUrl}/speech-to-text`, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': this.apiKey
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`ElevenLabs STT error: ${response.status} - ${errorData.detail || response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.text || '';
-    } catch (error) {
-      console.error('Speech-to-text error:', error);
-      throw error;
-    }
-  }
-
-  // Start recording audio for speech recognition
-  async startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mediaRecorder = new MediaRecorder(stream);
-      this.audioChunks = [];
-
-      this.mediaRecorder.ondataavailable = (event) => {
-        this.audioChunks.push(event.data);
-      };
-
-      this.mediaRecorder.start();
-      return this.mediaRecorder;
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      throw error;
-    }
-  }
-
-  // Stop recording and return audio blob
-  async stopRecording() {
-    return new Promise((resolve, reject) => {
-      if (!this.mediaRecorder) {
-        reject(new Error('No active recording'));
-        return;
-      }
-
-      this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
-        this.audioChunks = [];
-        
-        // Stop all tracks
-        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        
-        resolve(audioBlob);
-      };
-
-      this.mediaRecorder.stop();
-    });
   }
 }
 

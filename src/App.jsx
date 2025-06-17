@@ -7,13 +7,12 @@ import JSZip from 'jszip'
 
 // Components
 import ChatMessage from './components/ChatMessage'
-
+import Modals from './components/Modals'
 import SettingsModal from './components/SettingsModal'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
-import PhoneCallScreen from './components/PhoneCallScreen'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
@@ -83,7 +82,6 @@ function App() {
   const [showSidebar, setShowSidebar] = useState(false)
   const [savedMoments, setSavedMoments] = useState([])
   const [chatHistory, setChatHistory] = useState([])
-  const [showPhoneCall, setShowPhoneCall] = useState(false)
 
   // Refs
   const inputRef = useRef(null)
@@ -130,15 +128,7 @@ function App() {
         groqService.initialize(savedApiKey)
         setShowApiKeyModal(false)
       } else {
-        // Check for environment API key
-        const envApiKey = import.meta.env.VITE_GROQ_API_KEY
-        if (envApiKey) {
-          setApiKey(envApiKey)
-          groqService.initialize(envApiKey)
-          setShowApiKeyModal(false)
-        } else {
-          console.warn('No API key found in storage or environment')
-        }
+        setShowApiKeyModal(true)
       }
 
       // Load user preferences from Redis
@@ -268,11 +258,9 @@ function App() {
     const envApiKey = import.meta.env.VITE_GROQ_API_KEY
     if (envApiKey) {
       setApiKey(envApiKey)
-      groqService.initialize(envApiKey)
       setShowApiKeyModal(false)
     } else if (!apiKey) {
-      // No environment API key found - users would need to provide their own
-      console.warn('No API key configured')
+      setShowApiKeyModal(true)
     }
   }, [apiKey])
 
@@ -412,7 +400,7 @@ function App() {
     if (!inputMessage.trim() || isLoading) return;
     
     if (!groqService.isReady()) {
-      console.warn('Groq service not ready - please check API key configuration');
+      setShowApiKeyModal(true);
       return;
     }
 
@@ -879,7 +867,12 @@ function App() {
 
           {/* Main App Layout */}
           <div className="flex flex-1 gap-4 p-4 pt-0">
-
+            {/* Logo in top left corner */}
+            <div className="absolute top-4 left-4 z-30">
+              <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
+                <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
+              </div>
+            </div>
 
             {/* Permanent Sidebar for Desktop, Toggle for Mobile */}
             <div className="hidden lg:block w-80 flex-shrink-0">
@@ -891,7 +884,6 @@ function App() {
                 savedMoments={savedMoments}
                 userName={userName}
                 onClose={() => {}}
-                onStartPhoneCall={() => setShowPhoneCall(true)}
               />
             </div>
             
@@ -907,10 +899,6 @@ function App() {
                     savedMoments={savedMoments}
                     userName={userName}
                     onClose={() => setShowSidebar(false)}
-                    onStartPhoneCall={() => {
-                      setShowPhoneCall(true);
-                      setShowSidebar(false);
-                    }}
                   />
                 </div>
               )}
@@ -985,6 +973,29 @@ function App() {
                   </div>
                   
                   <div className="flex gap-2">
+                    {/* Upload Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={triggerFileUpload}
+                      className="neuro-button-secondary px-4 py-3"
+                      title="Upload Files"
+                    >
+                      <Upload className="w-4 h-4" />
+                    </motion.button>
+                    
+                    {/* Mobile Sidebar Toggle */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={handleToggleSidebar}
+                      className="neuro-button-secondary px-4 py-3 lg:hidden"
+                      title="Toggle Sidebar"
+                    >
+                      <Menu className="w-4 h-4" />
+                    </motion.button>
                     
                     {isLoading ? (
                       <motion.button
@@ -1045,7 +1056,13 @@ function App() {
       )}
 
       {/* Modals */}
-
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        onSubmit={handleApiKeySubmit}
+        isLoading={isLoading}
+        currentApiKey={apiKey}
+      />
       
       <SettingsModal
         isOpen={showSettingsModal}
@@ -1213,172 +1230,6 @@ function App() {
         onChange={handleFileUpload}
         className="hidden"
       />
-    </div>
-  )
-
-  // If phone call is active, render only the phone call screen
-  if (showPhoneCall) {
-    return (
-      <PhoneCallScreen
-        onEndCall={() => setShowPhoneCall(false)}
-      />
-    )
-  }
-
-  // Otherwise render the main chat interface
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar 
-        onStartPhoneCall={() => setShowPhoneCall(true)}
-        onNewChat={handleNewChat}
-        onSelectChat={handleSelectChat}
-        chats={chats}
-        currentChatId={currentChatId}
-        onDeleteChat={handleDeleteChat}
-        onRenameChat={handleRenameChat}
-      />
-
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col relative">
-        {currentView === 'landing' ? (
-          <LandingScreen 
-            onStartPhoneCall={() => setShowPhoneCall(true)}
-            onFileUpload={() => fileInputRef.current?.click()}
-          />
-        ) : (
-          <>
-            {/* Chat header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">AI</span>
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900">Chatty AI Assistant</h1>
-                  <p className="text-sm text-gray-500">Always here to help</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="neuro-button-secondary px-4 py-2 text-sm"
-                >
-                  📎 Upload Files
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleNewChat}
-                  className="neuro-button-primary px-4 py-2 text-sm"
-                >
-                  ✨ New Chat
-                </motion.button>
-              </div>
-            </div>
-
-            {/* Messages area */}
-            <div className="flex-1 overflow-hidden">
-              <div 
-                ref={messagesContainerRef}
-                className="h-full overflow-y-auto px-6 py-4 space-y-4"
-              >
-                <AnimatePresence>
-                  {messages.map((message) => (
-                    <MessageBubble 
-                      key={message.id} 
-                      message={message} 
-                      onRegenerate={handleRegenerate}
-                      onEdit={handleEditMessage}
-                    />
-                  ))}
-                </AnimatePresence>
-                
-                {isLoading && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-start"
-                  >
-                    <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200 max-w-xs">
-                      <TypingIndicator />
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-
-            {/* Input area */}
-            <div className="bg-white border-t border-gray-200 px-6 py-4">
-              <ChatInput 
-                onSendMessage={handleSendMessage}
-                disabled={isLoading}
-                onFileUpload={() => fileInputRef.current?.click()}
-              />
-            </div>
-          </>
-        )}
-
-        {/* Processing Modal */}
-        <AnimatePresence>
-          {showProcessingModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
-              >
-                <h3 className="text-lg font-semibold mb-4">Process Files</h3>
-                <p className="text-gray-600 mb-6">
-                  Ready to process {uploadedFiles.length} file(s). This will analyze and fix any issues found.
-                </p>
-                <div className="flex gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowProcessingModal(false)}
-                    className="neuro-button-secondary flex-1 py-2"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      fixAndDownload()
-                      setShowProcessingModal(false)
-                    }}
-                    disabled={uploadedFiles.length === 0 || isProcessing}
-                    className="neuro-button-primary flex-1 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isProcessing ? 'Processing...' : 'Fix & Download All'}
-                  </motion.button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json,.xml,.md,.txt"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-      </div>
     </div>
   )
 }
