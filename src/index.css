@@ -112,6 +112,19 @@
     backdrop-filter: blur(10px);
   }
   
+  /* Enhanced sticky elements for better integration */
+  .sidebar-integrated {
+    @apply bg-neuro-base border-r border-neuro-200;
+    box-shadow: inset -2px 0 4px rgba(163, 177, 198, 0.1);
+  }
+  
+  .input-area-integrated {
+    @apply bg-neuro-base/95;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 8px rgba(163, 177, 198, 0.15);
+  }
+  
   .typing-indicator {
     @apply flex items-center gap-1;
   }
@@ -165,8 +178,8 @@
   /* Sticky Layout Utilities */
   .sticky-header {
     @apply sticky top-0 z-30 bg-neuro-base/95;
-    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
   
   .sticky-sidebar {
@@ -175,8 +188,8 @@
   
   .sticky-input {
     @apply sticky bottom-0 bg-neuro-base/95 border-t border-neuro-200;
-    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
   
   /* Mobile Responsive Adjustments */

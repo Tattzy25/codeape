@@ -7,7 +7,7 @@ import JSZip from 'jszip'
 
 // Components
 import ChatMessage from './components/ChatMessage'
-// ApiKeyModal removed
+import ApiKeyModal from './components/ApiKeyModal'
 import SettingsModal from './components/SettingsModal'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
@@ -866,7 +866,7 @@ function App() {
           />
 
           {/* Main App Layout */}
-          <div className="flex flex-1 gap-6 p-4 pt-0">
+          <div className="flex flex-1 gap-4 p-4 pt-0">
             {/* Logo in top left corner */}
             <div className="absolute top-4 left-4 z-30">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
@@ -905,7 +905,7 @@ function App() {
             </AnimatePresence>
 
             {/* Chat Messages */}
-            <main className="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full">
+            <main className="flex-1 overflow-hidden flex flex-col">
               <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
                 <AnimatePresence>
                   {messages.map((message) => (
@@ -1056,7 +1056,13 @@ function App() {
       )}
 
       {/* Modals */}
-      {/* ApiKeyModal removed */}
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        onSubmit={handleApiKeySubmit}
+        isLoading={isLoading}
+        currentApiKey={apiKey}
+      />
       
       <SettingsModal
         isOpen={showSettingsModal}
