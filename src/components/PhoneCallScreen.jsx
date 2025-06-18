@@ -2,147 +2,92 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, Volume2, Mic, MicOff } from 'lucide-react';
 import elevenlabsService from '../services/elevenlabsService';
-
-const RING_DURATION =8000; //8 seconds
-const AUDIO_LEVEL_THRESHOLD_YELLING =0.7;
-const AUDIO_LEVEL_THRESHOLD_QUIET =0.1;
+import groqService, { DEFAULT_SETTINGS } from '../services/groqService';
 
 const PhoneCallScreen = ({ onEndCall }) => {
- const [isRinging, setIsRinging] = useState(false);
- const [isConnected, setIsConnected] = useState(false);
- const [isListening, setIsListening] = useState(false);
- const [isSpeaking, setIsSpeaking] = useState(false);
- const [callDuration, setCallDuration] = useState(0);
- const [micMuted, setMicMuted] = useState(false);
- const [speakerOn, setSpeakerOn] = useState(true);
- const [isRecording, setIsRecording] = useState(false);
- const [micPermission, setMicPermission] = useState(null);
- const [showMicPrompt, setShowMicPrompt] = useState(false);
- const [audioLevel, setAudioLevel] = useState(0);
- const [userMood, setUserMood] = useState('neutral');
- const [isYelling, setIsYelling] = useState(false);
- const cooldownPeriodRef = useRef(false);
- const conversationContextRef = useRef([]);
- const audioContextRef = useRef(null);
- const analyserRef = useRef(null);
- const microphoneRef = useRef(null);
- const animationFrameRef = useRef(null);
- const callTimerRef = useRef(null);
- const audioRef = useRef(null);
- const ringAudioRef = useRef(null);
- const recordingTimeoutRef = useRef(null);
+  const [isRinging, setIsRinging] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
+  const [micMuted, setMicMuted] = useState(false);
+  const [speakerOn, setSpeakerOn] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [micPermission, setMicPermission] = useState(null); // null, 'granted', 'denied'
+  const [showMicPrompt, setShowMicPrompt] = useState(false);
+  
+  const callTimerRef = useRef(null);
+  const audioRef = useRef(null);
+  const ringAudioRef = useRef(null);
+  const recordingTimeoutRef = useRef(null);
+  const conversationContextRef = useRef([]);
 
- const armenianGreeting = "Aallo... lsumem ova ?, what you need, bro?";
+  // Armenian greeting for call pickup
+  const armenianGreeting = "Aallo... You reached Kyartu, jan. I'm out here making moves, what you need, bro?";
 
-  // Dynamic conversation handler with mood and audio analysis
-  const generateDynamicResponse = (userInput) => {
-    const input = userInput.toLowerCase();
-    conversationContextRef.current.push({ 
-      type: 'user', 
-      text: userInput, 
-      mood: userMood, 
-      audioLevel: audioLevel, 
-      isYelling: isYelling,
-      timestamp: Date.now()
-    });
-    
-    let response = "";
-    
-    // React to user's emotional state first
-    if (isYelling) {
-      const yellingResponses = [
-        "Whoa whoa whoa, ara! Why you yelling at me, bro? Calm down",
-        "Ey, no need to raise your voice, ara! I can hear you just fine",
-        "Bro,Take a deep breath. What's really bothering you?"
+  // Dynamic conversation handler using Groq AI
+  const generateDynamicResponse = async (userInput) => {
+    if (!groqService.isReady()) {
+      console.error("Groq service not initialized. Cannot generate dynamic response.");
+      return "Ay, bro, my brain's not working right now. Try again later, jan.";
+    }
+
+    // Add user's input to conversation context
+    // conversationContextRef.current.push({ role: 'user', content: userInput });
+    // This is now handled in handleUserSpeech before calling generateDynamicResponse
+
+    // Prepare message history for Groq, sending the last 10 messages for context
+    const history = conversationContextRef.current.slice(-10);
+    const messagesForGroq = [...history, { role: 'user', content: userInput }];
+
+    try {
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        stream: false, // We need the full response before TTS
+        // Consider adjusting temperature for more varied/unhinged roasts if desired
+        // temperature: 0.85, 
+      };
+
+      // The Kyartu persona, including instructions for roasting and language, 
+      // is assumed to be part of the system prompt in groqService.generateDynamicSystemPrompt()
+      const aiResponse = await groqService.sendMessage(messagesForGroq, settings, null, 'kyartu-phonecall-user'); // Added a userId for potential memoryService use
+
+      if (aiResponse && aiResponse.content) {
+        const kyartuResponseText = aiResponse.content.trim();
+        conversationContextRef.current.push({ role: 'assistant', content: kyartuResponseText });
+        return kyartuResponseText;
+      } else {
+        console.error('No content in AI response from Groq.');
+        // Fallback response if AI gives empty content
+        const fallbackResponses = [
+          "Ara, I'm speechless. You actually broke my brain, gyot.",
+          "What? Speak up, I can't hear you over the sound of my success.",
+          "Bro, you talking to me or chewing on rocks? Makes no sense."
+        ];
+        const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+        conversationContextRef.current.push({ role: 'assistant', content: fallback });
+        return fallback;
+      }
+    } catch (error) {
+      console.error('Error getting dynamic response from Groq:', error);
+      const errorFallbackResponses = [
+        "Bro, the connection to my genius is down. Maybe the internet provider is a gyot.",
+        "My brain AI just crashed harder than your credit score, ara.",
+        "Can't think right now, too busy being a legend. Call back later."
       ];
-      response = yellingResponses[Math.floor(Math.random() * yellingResponses.length)];
+      const errorFallback = errorFallbackResponses[Math.floor(Math.random() * errorFallbackResponses.length)];
+      // Don't add Groq error responses to context to avoid cluttering it with failures
+      return errorFallback;
     }
-    else if (userMood === 'sad' && audioLevel < 0.3) {
-      const sadResponses = [
-        "Ara, you sound down. What's going on? Talk to me.",
-        "Hey, I can tell something's bothering you. You okay, ara?",
-        "Bro, your voice sounds heavy. What's weighing on your mind?"
-      ];
-      response = sadResponses[Math.floor(Math.random() * sadResponses.length)];
-    }
-    else if (userMood === 'excited') {
-      const excitedResponses = [
-        "Ara, I love the energy, bro are your jerking off? You sound pumped up!",
-        "Jan Axper! You got that fire in you.",
-        "Bro, your excitement is contagious! What's got you so hyped, aper?"
-      ];
-      response = excitedResponses[Math.floor(Math.random() * excitedResponses.length)];
-    }
-    else if (audioLevel < 0.1) {
-      response = "Ara, speak up bro! I can barely hear you, jan. Don't be shy!";
-    }
-    
-    // Money/business related
-    else if (input.includes('money') || input.includes('business') || input.includes('deal')) {
-      const moneyResponses = [
-        "Why you care how I make money, ara?",
-        "Bro, I made more money today than you'll see all month. Mind your own business",
-        "Listen ara, my business is my business. You focus on your own hustle, bro!"
-      ];
-      response = moneyResponses[Math.floor(Math.random() * moneyResponses.length)];
-    }
-    // Greeting responses
-    else if (input.includes('hey') || input.includes('hi') || input.includes('hello') || input.includes('what\'s up')) {
-      const greetingResponses = [
-        "Ara, what's good bro? I'm out here grinding, making moves!",
-        "Hey jan, I'm busy counting money but I got time for you. What you need?",
-        "What's up ara? Just closed another deal, business is booming!"
-      ];
-      response = greetingResponses[Math.floor(Math.random() * greetingResponses.length)];
-    }
-    // Roasting/challenging responses
-    else if (input.includes('stupid') || input.includes('dumb') || input.includes('idiot')) {
-      response = "Ara, who you calling stupid? I'm making millions while you're sitting there talking nonsense, jan!";
-    }
-    // Car related
-    else if (input.includes('car') || input.includes('mercedes') || input.includes('bmw')) {
-      response = "Bro, I got three Mercedes in my garage. What you driving, a Honda? Ara, step your game up!";
-    }
-    // Generic challenging responses
-    else {
-      const genericResponses = [
-        "Ara, what you trying to say bro? Speak up, I don't have all day!",
-        "Lsi ay txa, I'm busy making money moves. Get to the point!",
-        "Bro, you called me to waste my time? I charge by the minute, ara!",
-        "What's your point? I got business to handle!"
-      ];
-      response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
-    }
-    
-    conversationContextRef.current.push({ type: 'kyartu', text: response });
-    return response;
   };
 
-  // Real microphone permission and audio analysis setup
+  // Request microphone permission
   const requestMicPermission = async () => {
     try {
       setShowMicPrompt(true);
-      
-      // Request real microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      
-      // Set up audio analysis
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      microphoneRef.current = audioContextRef.current.createMediaStreamSource(stream);
-      
-      analyserRef.current.fftSize = 256;
-      microphoneRef.current.connect(analyserRef.current);
-      
-      // Start audio level monitoring
-      startAudioAnalysis();
-      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately, we just wanted permission
+      stream.getTracks().forEach(track => track.stop());
       setMicPermission('granted');
       setShowMicPrompt(false);
       return true;
@@ -151,61 +96,6 @@ const PhoneCallScreen = ({ onEndCall }) => {
       setMicPermission('denied');
       setShowMicPrompt(false);
       return false;
-    }
-  };
-
-  // Audio analysis for mood and volume detection
-  const startAudioAnalysis = () => {
-    if (!analyserRef.current) return;
-    
-    const bufferLength = analyserRef.current.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    
-    const analyzeAudio = () => {
-      analyserRef.current.getByteFrequencyData(dataArray);
-      
-      // Calculate average volume
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-      const normalizedLevel = average / 255;
-      
-      setAudioLevel(normalizedLevel);
-      
-      // Detect if user is yelling (high volume)
-      const isCurrentlyYelling = normalizedLevel > 0.7;
-      setIsYelling(isCurrentlyYelling);
-      
-      // Analyze frequency patterns for mood detection
-      const lowFreq = dataArray.slice(0, 10).reduce((sum, val) => sum + val, 0) / 10;
-      const midFreq = dataArray.slice(10, 50).reduce((sum, val) => sum + val, 0) / 40;
-      const highFreq = dataArray.slice(50, 100).reduce((sum, val) => sum + val, 0) / 50;
-      
-      // Simple mood detection based on frequency distribution
-      let detectedMood = 'neutral';
-      if (isCurrentlyYelling) {
-        detectedMood = 'angry';
-      } else if (normalizedLevel < 0.1) {
-        detectedMood = 'quiet';
-      } else if (highFreq > midFreq && midFreq > lowFreq) {
-        detectedMood = 'excited';
-      } else if (lowFreq > midFreq) {
-        detectedMood = 'sad';
-      }
-      
-      setUserMood(detectedMood);
-      
-      animationFrameRef.current = requestAnimationFrame(analyzeAudio);
-    };
-    
-    analyzeAudio();
-  };
-
-  // Stop audio analysis
-  const stopAudioAnalysis = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
     }
   };
 
@@ -233,8 +123,14 @@ const PhoneCallScreen = ({ onEndCall }) => {
           const audioBlob = await elevenlabsService.stopRecording();
           const transcript = await elevenlabsService.speechToText(audioBlob);
           
-          if (transcript.trim()) {
-            await handleUserSpeech(transcript);
+          if (transcript && transcript.trim()) {
+            await handleUserSpeech(transcript.trim());
+          } else {
+            console.log("No valid transcript received from STT.");
+            // Optionally, Kyartu could respond to silence/unclear audio here
+            // if (!isSpeaking && isConnected) {
+            //   speakKyartu("Speak up, ara! You mumbling or what?");
+            // }
           }
         } catch (error) {
           console.error('Speech recognition error:', error);
@@ -269,62 +165,38 @@ const PhoneCallScreen = ({ onEndCall }) => {
     };
   }, []);
 
-  // Initialize call on component mount
-  useEffect(() => {
-    // Component mounted, call initialization will be handled by the isRinging useEffect
-    return () => {
-      if (ringAudioRef.current) {
-        ringAudioRef.current.pause();
-        ringAudioRef.current.currentTime = 0;
-      }
-    };
-  }, []);
-
   // Handle call connection
   useEffect(() => {
-    // Request microphone permission first, then start ringing
-    const initializeCall = async () => {
-      const hasPermission = await requestMicPermission();
-      
-      if (hasPermission) {
-        // Start ringing sound after permission is granted
-        if (ringAudioRef.current) {
-          ringAudioRef.current.play().catch(console.error);
-        }
-
-        // Ring for 8 seconds (2 rings), then Kyartu answers
-        const ringTimer = setTimeout(() => {
-          // Stop ring sound
-          if (ringAudioRef.current) {
-            ringAudioRef.current.pause();
-            ringAudioRef.current.currentTime = 0;
-          }
-          
-          setIsRinging(false);
-          setIsConnected(true);
-          
-          // Start with Kyartu's Armenian greeting
-          setTimeout(() => {
-            speakKyartu(armenianGreeting);
-          }, 500);
-        }, 8000); // 8 seconds as requested
-
-        return () => {
-          clearTimeout(ringTimer);
-          if (ringAudioRef.current) {
-            ringAudioRef.current.pause();
-          }
-        };
-      } else {
-        // If permission denied, end call
-         setTimeout(() => {
-           handleEndCall();
-         }, 1000);
-      }
-    };
-
     if (isRinging) {
-      initializeCall();
+      // Play ring sound
+      if (ringAudioRef.current) {
+        ringAudioRef.current.play().catch(console.error);
+      }
+      
+      // Ring for 8 seconds (2 rings), then Kyartu answers
+      const ringTimer = setTimeout(() => {
+        // Stop ring sound
+        if (ringAudioRef.current) {
+          ringAudioRef.current.pause();
+          ringAudioRef.current.currentTime = 0;
+        }
+        
+        setIsRinging(false);
+        setIsConnected(true);
+        
+        // Start with Kyartu's Armenian greeting
+        setTimeout(() => {
+          conversationContextRef.current.push({ role: 'assistant', content: armenianGreeting });
+          speakKyartu(armenianGreeting);
+        }, 500);
+      }, 8000); // 8 seconds as requested
+
+      return () => {
+        clearTimeout(ringTimer);
+        if (ringAudioRef.current) {
+          ringAudioRef.current.pause();
+        }
+      };
     }
   }, [isRinging]);
 
@@ -334,12 +206,6 @@ const PhoneCallScreen = ({ onEndCall }) => {
       callTimerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
-
-      // Check if conversation duration approaches 90 seconds
-      if (callDuration >= 90) {
-        // AI hang-up logic
-        endCall();
-      }
 
       // Request microphone permission and start speech recognition
       if (!micMuted) {
@@ -362,13 +228,15 @@ const PhoneCallScreen = ({ onEndCall }) => {
         clearTimeout(recordingTimeoutRef.current);
       }
     };
-  }, [isConnected, callDuration, micMuted]);
+  }, [isConnected, micMuted]);
 
   const handleUserSpeech = async (transcript) => {
-    if (transcript.trim() && !isSpeaking) {
-      // Generate dynamic response based on user input
-      const response = generateDynamicResponse(transcript);
-      await speakKyartu(response);
+    if (transcript && transcript.trim() && !isSpeaking) {
+      conversationContextRef.current.push({ role: 'user', content: transcript });
+      const responseText = await generateDynamicResponse(transcript);
+      if (responseText) {
+        await speakKyartu(responseText);
+      }
     }
   };
 
@@ -411,10 +279,6 @@ const PhoneCallScreen = ({ onEndCall }) => {
   };
 
   const endCall = async () => {
-    // End call logic
-    setIsConnected(false);
-    setCallDuration(0);
-    
     // Stop ring sound if still playing
     if (ringAudioRef.current) {
       ringAudioRef.current.pause();
@@ -429,9 +293,6 @@ const PhoneCallScreen = ({ onEndCall }) => {
       }
     }
     
-    // Stop audio analysis
-    stopAudioAnalysis();
-    
     if (callTimerRef.current) {
       clearInterval(callTimerRef.current);
     }
@@ -439,17 +300,7 @@ const PhoneCallScreen = ({ onEndCall }) => {
       clearTimeout(recordingTimeoutRef.current);
     }
     
-    // Cooldown period
-    cooldownPeriodRef.current = true;
-    setTimeout(() => {
-      cooldownPeriodRef.current = false;
-    }, 60000); // 60 seconds
-    
     onEndCall();
-  };
-
-  const handleEndCall = () => {
-    endCall();
   };
 
   const formatCallDuration = (seconds) => {
@@ -547,67 +398,15 @@ const PhoneCallScreen = ({ onEndCall }) => {
           </div>
 
           {/* Kyartu's avatar */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
+          <div className="flex justify-center mb-12">
+            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-700">
               <img
-                src="/call kyartu.png"
+                src="/logo.png"
                 alt="Kyartu Vzgo"
-                className="w-32 h-32 rounded-full object-cover border-4 border-white/20"
+                className="w-full h-full object-cover"
               />
-              {/* Audio level indicator ring */}
-              {isConnected && (
-                <motion.div
-                  animate={{ scale: [1, 1 + audioLevel * 0.3, 1] }}
-                  transition={{ duration: 0.3 }}
-                  className={`absolute inset-0 rounded-full border-4 ${
-                    isYelling ? 'border-red-500' : 
-                    userMood === 'excited' ? 'border-yellow-500' :
-                    userMood === 'sad' ? 'border-blue-500' :
-                    'border-green-500'
-                  } opacity-70`}
-                  style={{ transform: `scale(${1 + audioLevel * 0.2})` }}
-                />
-              )}
             </div>
           </div>
-          
-          {/* Audio Analysis Indicators */}
-          {isConnected && (
-            <div className="flex justify-center mb-4">
-              <div className="bg-black/30 rounded-lg px-4 py-2 backdrop-blur-sm">
-                <div className="flex items-center gap-4 text-xs">
-                  {/* Audio Level Bar */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400">Vol:</span>
-                    <div className="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <motion.div
-                        className={`h-full ${
-                          isYelling ? 'bg-red-500' : 
-                          audioLevel > 0.5 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ width: `${audioLevel * 100}%` }}
-                        transition={{ duration: 0.1 }}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Mood Indicator */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400">Mood:</span>
-                    <span className={`text-xs font-medium ${
-                      userMood === 'angry' || isYelling ? 'text-red-400' :
-                      userMood === 'excited' ? 'text-yellow-400' :
-                      userMood === 'sad' ? 'text-blue-400' :
-                      userMood === 'quiet' ? 'text-gray-400' :
-                      'text-green-400'
-                    }`}>
-                      {isYelling ? 'YELLING' : userMood.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Speaking/Listening indicators */}
           {isSpeaking && (
@@ -676,7 +475,7 @@ const PhoneCallScreen = ({ onEndCall }) => {
           <div className="flex justify-center">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={handleEndCall}
+              onClick={endCall}
               className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg"
             >
               <PhoneOff className="w-8 h-8 text-white" />

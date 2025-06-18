@@ -12,6 +12,7 @@ import LandingScreen from './components/LandingScreen'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import PhoneCallScreen from './components/PhoneCallScreen'
+import SmokeAndRoast from './components/SmokeAndRoast'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
@@ -86,6 +87,9 @@ function App() {
   const [showPhoneCall, setShowPhoneCall] = useState(false)
   const [lastCallTime, setLastCallTime] = useState(null)
   const [callCooldownActive, setCallCooldownActive] = useState(false)
+
+  // Smoke and Roast state
+  const [showSmokeAndRoast, setShowSmokeAndRoast] = useState(false)
 
   // Refs
   const inputRef = useRef(null)
@@ -874,6 +878,19 @@ function App() {
     setShowLandingScreen(false)
   }, [lastCallTime, userId])
 
+  const handleStartSmokeAndRoast = () => {
+    setShowLandingScreen(false)
+    setShowPhoneCall(false) // Ensure other modals/screens are hidden
+    setShowSmokeAndRoast(true)
+  }
+
+  const handleGoBackToChat = () => {
+    setShowSmokeAndRoast(false)
+    setShowPhoneCall(false)
+    setShowLandingScreen(false) // Go back to main chat, not landing
+    // Optionally, re-initialize chat or scroll to bottom etc.
+  }
+
   const handleEndPhoneCall = useCallback(() => {
     setShowPhoneCall(false)
     setShowLandingScreen(true)
@@ -916,10 +933,19 @@ function App() {
   return (
     <div className="min-h-screen bg-neuro-base flex flex-col mobile-safe-area">
       {/* Show Landing Screen or Main App */}
-      {showPhoneCall ? (
-        <PhoneCallScreen onEndCall={handleEndPhoneCall} />
+      {showSmokeAndRoast ? (
+        <SmokeAndRoast 
+          onGoBackToChat={handleGoBackToChat} 
+          userName={userName} 
+        />
+      ) : showPhoneCall ? (
+        <PhoneCallScreen onEndCall={handleEndPhoneCall} userName={userName} apiKey={apiKey} />
       ) : showLandingScreen ? (
-        <LandingScreen onStartChat={handleStartChat} onStartPhoneCall={handleStartPhoneCall} />
+        <LandingScreen 
+          onStartChat={handleStartChat} 
+          onStartPhoneCall={handleStartPhoneCall} 
+          onStartSmokeAndRoast={handleStartSmokeAndRoast} 
+        />
       ) : (
         <>
           {/* Header Component */}
@@ -957,6 +983,7 @@ function App() {
                 userName={userName}
                 onClose={() => {}}
                 onStartPhoneCall={handleStartPhoneCall}
+                onStartSmokeAndRoast={handleStartSmokeAndRoast}
               />
             </div>
             
@@ -973,6 +1000,7 @@ function App() {
                     userName={userName}
                     onClose={() => setShowSidebar(false)}
                     onStartPhoneCall={handleStartPhoneCall}
+                    onStartSmokeAndRoast={handleStartSmokeAndRoast}
                   />
                 </div>
               )}

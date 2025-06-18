@@ -11,7 +11,7 @@ export default defineConfig({
       manifest: {
         name: 'kyartu Vzgo',
         short_name: 'kyartu Vzgo',
-        description: 'Ara kayfavat brat jan',
+        description: 'utenk, xmenk, kef anenk',
         theme_color: '#667eea',
         background_color: '#e0e5ec',
         display: 'standalone',
@@ -92,14 +92,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false
-      }
-    }
+    host: true
   },
   preview: {
     port: 4173,

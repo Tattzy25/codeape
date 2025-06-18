@@ -132,15 +132,9 @@ class ElevenLabsService {
       // In a production environment, you'd want to use ElevenLabs STT API
       return new Promise((resolve, reject) => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-          // Fallback: return a generic response to keep conversation going
-          const responses = [
-            "Yeah, I hear you bro",
-            "Uh huh, go on",
-            "What else you got?",
-            "I'm listening, ara",
-            "Keep talking"
-          ];
-          resolve(responses[Math.floor(Math.random() * responses.length)]);
+          // If SpeechRecognition API is not available, resolve with null.
+          resolve(null);
+          console.warn('SpeechRecognition API not available.');
           return;
         }
         
@@ -149,22 +143,37 @@ class ElevenLabsService {
         
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = 'en-US';
+        recognition.lang = 'en-US'; // Consider making this configurable if other languages are needed for STT
         
+        let resolved = false;
         recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          resolve(transcript);
+          if (event.results.length > 0 && event.results[0].length > 0) {
+            const transcript = event.results[0][0].transcript;
+            if (transcript.trim()) {
+              resolved = true;
+              resolve(transcript.trim());
+            } else {
+              // Resolved with empty if transcript is just whitespace
+              resolved = true;
+              resolve(null); 
+            }
+          } else {
+            resolved = true;
+            resolve(null); // No valid result
+          }
         };
         
         recognition.onerror = (event) => {
           console.error('Speech recognition error:', event.error);
-          // Fallback response
-          resolve("I didn't catch that, but keep going ara");
+          resolved = true;
+          resolve(null); // Resolve with null on error
         };
         
         recognition.onend = () => {
-          // If no result was captured, provide fallback
-          resolve("Tell me more, bro");
+          // If onresult or onerror hasn't resolved, it means no speech was detected or another issue occurred.
+          if (!resolved) {
+            resolve(null);
+          }
         };
         
         // Convert blob to audio and start recognition
@@ -179,8 +188,7 @@ class ElevenLabsService {
       });
     } catch (error) {
       console.error('Speech-to-text error:', error);
-      // Return fallback response
-      return "I'm here, keep talking ara";
+      return null; // Return null on exception
     }
   }
 

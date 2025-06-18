@@ -13,7 +13,8 @@ const Sidebar = ({
   userName,
   onSelectChat,
   onToggleMoment,
-  onStartPhoneCall
+  onStartPhoneCall,
+  onStartSmokeAndRoast // Add new prop
 }) => {
   const getMoodIcon = (mood) => {
     const moodIcons = {
@@ -159,7 +160,10 @@ const Sidebar = ({
                   </div>
                 </NeumorphicButton>
                 
-                <NeumorphicButton className="h-16 rounded-xl">
+                <NeumorphicButton 
+                  className="h-16 rounded-xl"
+                  onClick={onStartSmokeAndRoast} // Connect the handler
+                >
                   <div className="flex flex-col items-center gap-1">
                     <Cigarette className="w-5 h-5" />
                     <span className="text-xs font-medium text-center">Smoke & Roast Ara</span>
@@ -291,5 +295,21 @@ const Sidebar = ({
      </>
    )
  }
+
+import PropTypes from 'prop-types';
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+  respectMeter: PropTypes.number.isRequired,
+  kyartuMood: PropTypes.string.isRequired,
+  chatHistory: PropTypes.array.isRequired,
+  savedMoments: PropTypes.array.isRequired,
+  userName: PropTypes.string.isRequired,
+  onSelectChat: PropTypes.func.isRequired,
+  onToggleMoment: PropTypes.func.isRequired,
+  onStartPhoneCall: PropTypes.func.isRequired,
+  onStartSmokeAndRoast: PropTypes.func.isRequired, // Add prop type
+};
 
 export default Sidebar

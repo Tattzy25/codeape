@@ -12,7 +12,7 @@ const GENDER_OPTIONS = [
   { value: 'neutral', label: 'Galuboy' },
 ];
 
-const LandingScreen = ({ onStartChat, onStartPhoneCall }) => {
+const LandingScreen = ({ onStartChat, onStartPhoneCall, onStartSmokeAndRoast }) => {
   const [name, setName] = useState('');
   const [gender, setGender] = useState('neutral');
   const [showForm, setShowForm] = useState(false);
@@ -110,7 +110,10 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall }) => {
                   </div>
                 </NeumorphicButton>
                 
-                <NeumorphicButton className="h-20 rounded-2xl">
+                <NeumorphicButton 
+                  className="h-20 rounded-2xl" 
+                  // onClick={onStartSmokeAndRoast} // Removed handler from here
+                >
                   <div className="flex flex-col items-center gap-2">
                     <Dice1 className="w-6 h-6" />
                     <span className="text-xs font-medium">Hit the Slots Ara</span>
@@ -131,7 +134,10 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall }) => {
                   </div>
                 </NeumorphicButton>
                 
-                <NeumorphicButton className="h-20 rounded-2xl">
+                <NeumorphicButton 
+                  className="h-20 rounded-2xl"
+                  onClick={onStartSmokeAndRoast} // Connected handler here
+                >
                   <div className="flex flex-col items-center gap-2">
                     <Cigarette className="w-6 h-6" />
                     <span className="text-xs font-medium">Smoke & Roast Ara</span>
@@ -243,6 +249,8 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall }) => {
 
 LandingScreen.propTypes = {
   onStartChat: PropTypes.func.isRequired,
+  onStartPhoneCall: PropTypes.func.isRequired,
+  onStartSmokeAndRoast: PropTypes.func.isRequired, // Add prop type
 };
 
 export default LandingScreen;
