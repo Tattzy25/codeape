@@ -20,6 +20,10 @@ class ErrorBoundary extends React.Component {
     console.error('Error caught by boundary:', error, errorInfo)
     console.error('Error stack:', error.stack)
     console.error('Component stack:', errorInfo.componentStack)
+    
+    // Log the actual error details for debugging
+    console.error('Actual error message:', error.message)
+    console.error('Error name:', error.name)
   }
 
   render() {
@@ -34,6 +38,9 @@ class ErrorBoundary extends React.Component {
             <p className="text-neuro-500 mb-6">
               The AI encountered an unexpected error. Please refresh the page to try again.
             </p>
+            <div className="text-xs text-neuro-400 mb-4 p-2 bg-neuro-100 rounded">
+              Error: {this.state.error?.message || 'Unknown error'}
+            </div>
             <button
               onClick={() => window.location.reload()}
               className="neuro-button-primary"

@@ -4,15 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Settings, Zap, MessageCircle, Sparkles, Upload, FileText, Download, RefreshCw, CheckCircle, Menu, Copy, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import JSZip from 'jszip'
-
 // Components
 import ChatMessage from './components/ChatMessage'
 import Modals from './components/Modals'
-import SettingsModal from './components/SettingsModal'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
+import PhoneCallScreen from './components/PhoneCallScreen'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
@@ -82,6 +81,11 @@ function App() {
   const [showSidebar, setShowSidebar] = useState(false)
   const [savedMoments, setSavedMoments] = useState([])
   const [chatHistory, setChatHistory] = useState([])
+  
+  // Phone call state
+  const [showPhoneCall, setShowPhoneCall] = useState(false)
+  const [lastCallTime, setLastCallTime] = useState(null)
+  const [callCooldownActive, setCallCooldownActive] = useState(false)
 
   // Refs
   const inputRef = useRef(null)
@@ -128,7 +132,7 @@ function App() {
         groqService.initialize(savedApiKey)
         setShowApiKeyModal(false)
       } else {
-        setShowApiKeyModal(true)
+        // setShowApiKeyModal(true) // Disabled automatic API key modal
       }
 
       // Load user preferences from Redis
@@ -260,7 +264,7 @@ function App() {
       setApiKey(envApiKey)
       setShowApiKeyModal(false)
     } else if (!apiKey) {
-      setShowApiKeyModal(true)
+      // setShowApiKeyModal(true) // Disabled automatic API key modal
     }
   }, [apiKey])
 
@@ -400,7 +404,8 @@ function App() {
     if (!inputMessage.trim() || isLoading) return;
     
     if (!groqService.isReady()) {
-      setShowApiKeyModal(true);
+      // setShowApiKeyModal(true); // Disabled automatic API key modal
+      toast.error('Please configure your API key in settings first.');
       return;
     }
 
@@ -843,11 +848,78 @@ function App() {
     setMessages([welcomeMessage])
   }, [])
 
+  // Phone call handlers
+  const handleStartPhoneCall = useCallback(async () => {
+    // Check cooldown period (1 hour = 3600000 ms)
+    const now = Date.now()
+    const cooldownPeriod = 60 * 60 * 1000 // 1 hour in milliseconds
+    
+    if (lastCallTime && (now - lastCallTime) < cooldownPeriod) {
+      const remainingTime = Math.ceil((cooldownPeriod - (now - lastCallTime)) / (60 * 1000)) // minutes
+      toast.error(`Kyartu is busy making money! Try again in ${remainingTime} minutes, ara.`)
+      return
+    }
+    
+    // Store call attempt in Redis for persistence
+    try {
+      await redisService.storeCallAttempt(userId, now)
+    } catch (error) {
+      console.error('Failed to store call attempt:', error)
+      // Fallback to localStorage
+      localStorage.setItem('lastCallTime', now.toString())
+    }
+    
+    setLastCallTime(now)
+    setShowPhoneCall(true)
+    setShowLandingScreen(false)
+  }, [lastCallTime, userId])
+
+  const handleEndPhoneCall = useCallback(() => {
+    setShowPhoneCall(false)
+    setShowLandingScreen(true)
+  }, [])
+
+  // Check for existing call cooldown on app load
+  useEffect(() => {
+    const checkCallCooldown = async () => {
+      try {
+        const lastCall = await redisService.getLastCallTime(userId)
+        if (lastCall) {
+          const now = Date.now()
+          const cooldownPeriod = 60 * 60 * 1000 // 1 hour
+          
+          if ((now - lastCall) < cooldownPeriod) {
+            setLastCallTime(lastCall)
+            setCallCooldownActive(true)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check call cooldown:', error)
+        // Fallback to localStorage
+        const localLastCall = localStorage.getItem('lastCallTime')
+        if (localLastCall) {
+          const lastCall = parseInt(localLastCall)
+          const now = Date.now()
+          const cooldownPeriod = 60 * 60 * 1000
+          
+          if ((now - lastCall) < cooldownPeriod) {
+            setLastCallTime(lastCall)
+            setCallCooldownActive(true)
+          }
+        }
+      }
+    }
+    
+    checkCallCooldown()
+  }, [userId])
+
   return (
     <div className="min-h-screen bg-neuro-base flex flex-col mobile-safe-area">
       {/* Show Landing Screen or Main App */}
-      {showLandingScreen ? (
-        <LandingScreen onStartChat={handleStartChat} />
+      {showPhoneCall ? (
+        <PhoneCallScreen onEndCall={handleEndPhoneCall} />
+      ) : showLandingScreen ? (
+        <LandingScreen onStartChat={handleStartChat} onStartPhoneCall={handleStartPhoneCall} />
       ) : (
         <>
           {/* Header Component */}
@@ -884,6 +956,7 @@ function App() {
                 savedMoments={savedMoments}
                 userName={userName}
                 onClose={() => {}}
+                onStartPhoneCall={handleStartPhoneCall}
               />
             </div>
             
@@ -899,6 +972,7 @@ function App() {
                     savedMoments={savedMoments}
                     userName={userName}
                     onClose={() => setShowSidebar(false)}
+                    onStartPhoneCall={handleStartPhoneCall}
                   />
                 </div>
               )}
@@ -1056,19 +1130,20 @@ function App() {
       )}
 
       {/* Modals */}
-      <ApiKeyModal
-        isOpen={showApiKeyModal}
-        onClose={() => setShowApiKeyModal(false)}
-        onSubmit={handleApiKeySubmit}
-        isLoading={isLoading}
-        currentApiKey={apiKey}
-      />
-      
-      <SettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        onSubmit={handleSettingsUpdate}
-        currentSettings={settings}
+      <Modals
+        showApiKeyModal={showApiKeyModal}
+        setShowApiKeyModal={setShowApiKeyModal}
+        showSettingsModal={showSettingsModal}
+        setShowSettingsModal={setShowSettingsModal}
+        showProcessingModal={showProcessingModal}
+        setShowProcessingModal={setShowProcessingModal}
+        apiKey={apiKey}
+        setApiKey={setApiKey}
+        handleApiKeySubmit={handleApiKeySubmit}
+        settings={settings}
+        updateSettings={handleSettingsUpdate}
+        processingOptions={processingOptions}
+        setProcessingOptions={setProcessingOptions}
       />
       
       {/* Processing Options Modal */}

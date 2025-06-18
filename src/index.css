@@ -120,6 +120,7 @@
   
   .input-area-integrated {
     @apply bg-neuro-base/95;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 -2px 8px rgba(163, 177, 198, 0.15);

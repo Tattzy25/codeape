@@ -354,6 +354,19 @@ class RedisService {
   }
 
   /**
+   * Phone Call Management
+   */
+  async storeCallAttempt(userId, timestamp) {
+    const key = `call_attempt:${userId}`;
+    return this.set(key, timestamp, this.TTL.LAST_SEEN);
+  }
+
+  async getLastCallTime(userId) {
+    const key = `call_attempt:${userId}`;
+    return this.get(key);
+  }
+
+  /**
    * Utility Methods
    */
   generateSessionId() {
