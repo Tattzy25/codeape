@@ -2,7 +2,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp, Phone, Dice1, Star, Users, Cigarette, Shield } from 'lucide-react'
 import NeumorphicButton from './GoldenButton';
-import logo from '/logo.png';
+
 import VibezMenu from './VibezMenu'
 
 const Sidebar = ({ 
@@ -17,7 +17,9 @@ const Sidebar = ({
   onToggleMoment,
   onStartPhoneCall,
   onStartSmokeAndRoast, // Add new prop
-  onSelectFeature
+  onSelectFeature,
+  currentPage = 'Armo Lobby',
+  onReturnToLobby
 }) => {
   const getMoodIcon = (mood) => {
     const moodIcons = {
@@ -60,68 +62,36 @@ const Sidebar = ({
         animate={{ x: 0 }}
         exit={{ x: -300 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed top-0 left-0 h-screen w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
+        className="fixed top-0 left-0 h-screen w-72 sm:w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar mobile-safe-area"
       >
         {/* Header */}
-        <div className="p-6 flex flex-col items-center border-b border-neuro-300">
-          <img src={logo} alt="Logo" className="w-24 h-24 mb-4" />
-          <VibezMenu onSelectFeature={onSelectFeature} />
+        <div className="p-4 sm:p-6 flex flex-col items-center border-b border-neuro-300">
+          <img src="https://i.imgur.com/V0Jx5e7.png" alt="Logo" className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 mb-3 sm:mb-4" />
+          <VibezMenu 
+            onSelectFeature={onSelectFeature} 
+            currentPage={currentPage} 
+            onReturnToLobby={onReturnToLobby}
+          />
         </div>
 
         
 
             
 
-            {/* Persona Switcher (Coming Soon) */}
-            <div className="p-6 border-b border-neuro-300">
-              <div className="flex items-center gap-2 mb-3">
-                <Heart className="w-5 h-5 text-pink-500" />
-                <h3 className="font-bold text-neuro-700">Personas</h3>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="neuro-button p-3 w-full text-left opacity-50 cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Cousin Vacho</span>
-                    <Lock className="w-4 h-4" />
-                  </div>
-                  <p className="text-xs text-neuro-400">Dark & Cold</p>
-                </div>
-                
-                <div className="neuro-button p-3 w-full text-left opacity-50 cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Uncle Levon</span>
-                    <Lock className="w-4 h-4" />
-                  </div>
-                  <p className="text-xs text-neuro-400">Old-school, Paranoid</p>
-                </div>
-                
-                <div className="neuro-button p-3 w-full text-left opacity-50 cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Sona</span>
-                    <Lock className="w-4 h-4" />
-                  </div>
-                  <p className="text-xs text-neuro-400">Crazy Ex Energy</p>
-                </div>
-              </div>
-              
-              <p className="text-xs text-neuro-400 mt-2 italic">
-                🔒 Unlock personas by building respect
-              </p>
-            </div>
+            
 
             {/* Saved Moments */}
-            <div className="p-6 border-b border-neuro-300">
+            <div className="p-4 sm:p-6 border-b border-neuro-300">
               <div className="flex items-center gap-2 mb-3">
-                <Bookmark className="w-5 h-5 text-blue-500" />
-                <h3 className="font-bold text-neuro-700">Saved Moments</h3>
+                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                <h3 className="font-bold text-neuro-700 text-sm sm:text-base">Saved Moments</h3>
               </div>
               
               {savedMoments.length > 0 ? (
-                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                <div className="space-y-2 max-h-32 sm:max-h-40 overflow-y-auto custom-scrollbar">
                   {savedMoments.map((moment, index) => (
-                    <div key={index} className="neuro-button p-3 text-left">
-                      <p className="text-sm text-neuro-700 line-clamp-2">
+                    <div key={index} className="neuro-button p-2 sm:p-3 text-left touch-manipulation">
+                      <p className="text-xs sm:text-sm text-neuro-700 line-clamp-2">
                         "{moment.content}"
                       </p>
                       <p className="text-xs text-neuro-400 mt-1">
@@ -131,28 +101,28 @@ const Sidebar = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-neuro-500 italic">
+                <p className="text-xs sm:text-sm text-neuro-500 italic">
                   No saved moments yet. Bookmark Kyartu's best roasts!
                 </p>
               )}
             </div>
 
             {/* Chat History */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-3">
-                <MessageCircle className="w-5 h-5 text-green-500" />
-                <h3 className="font-bold text-neuro-700">Chat History</h3>
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                <h3 className="font-bold text-neuro-700 text-sm sm:text-base">Chat History</h3>
               </div>
               
               {chatHistory.length > 0 ? (
-                <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
                   {chatHistory.map((chat, index) => (
                     <button
                       key={index}
                       onClick={() => onSelectChat(chat)}
-                      className="neuro-button p-3 w-full text-left hover:shadow-neuro-hover transition-all"
+                      className="neuro-button p-2 sm:p-3 w-full text-left hover:shadow-neuro-hover transition-all touch-manipulation min-h-[44px] flex flex-col justify-center"
                     >
-                      <p className="text-sm text-neuro-700 font-medium">
+                      <p className="text-xs sm:text-sm text-neuro-700 font-medium">
                         {chat.title || `Chat ${index + 1}`}
                       </p>
                       <p className="text-xs text-neuro-400">
@@ -165,7 +135,7 @@ const Sidebar = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-neuro-500 italic">
+                <p className="text-xs sm:text-sm text-neuro-500 italic">
                   No chat history yet. Start your first conversation!
                 </p>
               )}
