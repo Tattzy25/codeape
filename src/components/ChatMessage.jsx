@@ -300,7 +300,7 @@ const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice, onUp
             <span>{timestamp}</span>
           </div>
 
-          {/* Mood indicator for Kyartu */}
+          {/* Mood indicator for Armo */}
           {!isUser && message.mood && (
             <>
               <span>•</span>
@@ -375,7 +375,7 @@ const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice, onUp
           )}
         </motion.div>
         
-        {/* Reaction Bar for Kyartu's messages */}
+        {/* Reaction Bar for Armo's messages */}
         {!isUser && onReaction && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -409,6 +409,15 @@ const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice, onUp
   )
 })
 
+/**
+ * ChatMessage Component
+ * 
+ * @param {Object} props
+ * @param {string} props.message - The message content
+ * @param {string} props.sender - Message sender ('user' | 'ai')
+ * @param {Date} props.timestamp - Message timestamp
+ * @param {Function} props.onReaction - Callback for message reactions
+ */
 ChatMessage.displayName = 'ChatMessage'
 
 export default ChatMessage

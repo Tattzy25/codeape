@@ -62,7 +62,22 @@ export const useChatActions = (appState) => {
       }
       
       // Get response from AI
-      const response = await groqService.chat(
+      try {
+        const searchResults = await tavilyService.search(inputMessage)
+      } catch (error) {
+        console.error('Search error:', error)
+        searchResults = null
+      }
+
+      try {
+        const searchResults = await tavilyService.search(inputMessage)
+      } catch (error) {
+        console.error('Search error:', error)
+        searchResults = null
+      }
+
+      try {
+        const response = await groqService.chat(
         messages.concat(userMessage),
         searchResults,
         abortControllerRef.current.signal,
@@ -101,6 +116,7 @@ export const useChatActions = (appState) => {
       await memoryService.addMemory(userMessage, assistantMessage)
       
     } catch (error) {
+
       if (error.name !== 'AbortError') {
         console.error('Chat error:', error)
         toast.error('Failed to get response')

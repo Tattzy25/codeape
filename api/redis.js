@@ -1,10 +1,36 @@
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+// Initialize Redis client with enhanced configuration
+let redis;
+
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  // Upstash Redis (Production)
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY) || 100,
+    maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES) || 3,
+    connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT) || 10000,
+    commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT) || 5000,
+    lazyConnect: true
+  });
+} else if (process.env.REDIS_HOST) {
+  // Local Redis (Development)
+  redis = new Redis({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD,
+    db: parseInt(process.env.REDIS_DB) || 0,
+    retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY) || 100,
+    maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES) || 3,
+    connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT) || 10000,
+    commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT) || 5000,
+    lazyConnect: true,
+    keepAlive: 30000
+  });
+} else {
+  console.warn('⚠️ No Redis configuration found. Service will operate in fallback mode.');
+}
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -18,10 +44,21 @@ export default async function handler(req, res) {
 
   try {
     // Check if Redis is configured
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    if (!redis) {
       return res.status(500).json({ 
         error: 'Redis not configured',
-        message: 'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables are required'
+        message: 'Redis configuration is required. Set either Upstash (UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN) or local Redis (REDIS_HOST, REDIS_PORT) environment variables.'
+      });
+    }
+    
+    // Test Redis connection
+    try {
+      await redis.ping();
+    } catch (connectionError) {
+      console.error('Redis connection failed:', connectionError);
+      return res.status(503).json({
+        error: 'Redis connection failed',
+        message: 'Unable to connect to Redis server. Please check your configuration.'
       });
     }
 

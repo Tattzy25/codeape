@@ -9,19 +9,15 @@ import ChatMessage from './components/ChatMessage'
 import Modals from './components/Modals'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
+import Sidebar from './components/Sidebar'
 import Header from './components/Header'
-import useSearch from './hooks/useSearch'
-import Sidebar from './components/Sidebar';
-import ArmoLobby from './components/ArmoLobby'
-import * as features from './features';
-
 import PhoneCallScreen from './components/PhoneCallScreen'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
 import redisService from './services/redisService'
 import { storageService } from './services/storageService'
-
+import tavilyService from './services/tavilyService'
 import elevenlabsService from './services/elevenlabsService'
 
 // Initialize services
@@ -49,7 +45,6 @@ const RESPECT_KEYWORDS = {
 }
 
 function App() {
-  const { isSearching, handleSearchCommand } = useSearch();
   // Generate unique IDs for Redis
   const [sessionId] = useState(() => redisService.generateSessionId());
   const [userId] = useState(() => redisService.generateUserId());
@@ -74,8 +69,8 @@ function App() {
   const [processedFiles, setProcessedFiles] = useState([])
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-
-
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false)
   
   // Kyartu Vzgo specific state
   const [showLandingScreen, setShowLandingScreen] = useState(true)
@@ -83,22 +78,7 @@ function App() {
   const [userGender, setUserGender] = useState('neutral')
   const [kyartuMood, setKyartuMood] = useState('unbothered')
   const [respectMeter, setRespectMeter] = useState(50)
-  const [selectedFeature, setSelectedFeature] = useState(null);
-  const [showArmoLobby, setShowArmoLobby] = useState(true);
-
-  const featureComponents = {
-    'Call Kyartu Ara': features.CallKyartuAra,
-    'Make Me Famous Ara': features.MakeMeFamousAra,
-    'You\'re Hired Ara': features.YoureHiredAra,
-    'Smoke & Roast Ara': features.SmokeAndRoastAra,
-    'Therapy Session': features.TherapySession,
-    'Give Me Alibi Ara': features.GiveMeAlibiAra,
-    'Find Me Forever Man/Wife': features.FindMeForeverManWife,
-    'Coming Soon 1': features.ComingSoon1,
-    'Coming Soon 2': features.ComingSoon2,
-    'Coming Soon 3': features.ComingSoon3,
-  };
-
+  const [showSidebar, setShowSidebar] = useState(false)
   const [savedMoments, setSavedMoments] = useState([])
   const [chatHistory, setChatHistory] = useState([])
   
@@ -106,25 +86,6 @@ function App() {
   const [showPhoneCall, setShowPhoneCall] = useState(false)
   const [lastCallTime, setLastCallTime] = useState(null)
   const [callCooldownActive, setCallCooldownActive] = useState(false)
-  
-  // Mobile menu state
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  
-  // Mobile menu handler
-  const closeMobileMenu = useCallback(() => {
-    setShowMobileMenu(false)
-  }, [])
-
-  // Handle returning to Armo Lobby
-  const handleReturnToLobby = () => {
-    setSelectedFeature(null)
-    setShowArmoLobby(true)
-  }
-
-  const handleSelectFeature = (feature) => {
-    setSelectedFeature(feature)
-    setShowArmoLobby(false)
-  }
 
   // Refs
   const inputRef = useRef(null)
@@ -323,7 +284,42 @@ function App() {
   }, [userId, saveToStorage])
 
   // Handle search commands
+  const handleSearchCommand = useCallback(async (userMessage, newMessages) => {
+    const searchQuery = userMessage.content.replace(/^\/(search|web|tavily)\s*/i, '').trim();
+    
+    if (!searchQuery) {
+      throw new Error('Please provide a search query. Example: /search renewable energy benefits');
+    }
 
+    setStreamingMessage(isDeepSearchEnabled ? '🔍 Deep searching the web...' : '🔍 Searching the web...');
+    const searchResults = isDeepSearchEnabled 
+      ? await tavilyService.advancedSearch(searchQuery)
+      : await tavilyService.search(searchQuery);
+  
+    const formattedResults = tavilyService.formatResults(searchResults);
+      
+    const aiMessage = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: formattedResults.formatted,
+      timestamp: new Date().toISOString(),
+      isSearchResult: true,
+      searchQuery: searchQuery,
+      resultCount: formattedResults.resultCount
+    };
+
+    const finalMessages = [...newMessages, aiMessage];
+    setMessages(finalMessages);
+    
+    try {
+      await redisService.storeChatHistory(sessionId, finalMessages);
+      await redisService.cacheSearchResults(searchQuery, searchResults);
+      await redisService.updateLastSeen(userId);
+    } catch (error) {
+      console.error('Failed to save to Redis:', error);
+      saveToStorage(STORAGE_KEYS.CHAT_HISTORY, finalMessages);
+    }
+  }, [isDeepSearchEnabled, sessionId, userId, saveToStorage, setStreamingMessage, setMessages]);
 
   // Memoized conversation history preparation
   const prepareConversationHistory = useMemo(() => {
@@ -413,12 +409,6 @@ function App() {
       return;
     }
 
-    if (inputMessage.toLowerCase().startsWith('/search')) {
-      handleSearchCommand(inputMessage.substring(8), messages, setMessages, setIsLoading, kyartuMood, abortControllerRef);
-      setInputMessage(''); // Clear input after command
-      return;
-    }
-
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -436,7 +426,13 @@ function App() {
     try {
       abortControllerRef.current = new AbortController();
 
-
+      const searchCommands = ['/search', '/web', '/tavily'];
+      const isSearchCommand = searchCommands.some(cmd => userMessage.content.toLowerCase().startsWith(cmd));
+      
+      if (isSearchCommand) {
+        await handleSearchCommand(userMessage, newMessages);
+        return;
+      }
 
       await handleChatMessage(userMessage, newMessages);
 
@@ -475,7 +471,7 @@ function App() {
       abortControllerRef.current = null
       inputRef.current?.focus()
     }
-  }, [inputMessage, messages, settings, isLoading, saveToStorage, userId, sessionId, kyartuMood])
+  }, [inputMessage, messages, settings, isLoading, saveToStorage, isDeepSearchEnabled, userId, sessionId, kyartuMood])
 
   // Handle emoji reactions
   const handleReaction = useCallback(async (messageId, emoji) => {
@@ -815,12 +811,18 @@ function App() {
     })
   }, [uploadedFiles, processFilesWithAI, generateDownload])
 
+  // Close mobile menu when clicking outside
+  const closeMobileMenu = useCallback(() => {
+    setShowMobileMenu(false)
+  }, [])
 
   // Kyartu-specific handlers
 
 
 
-
+  const handleToggleSidebar = useCallback(() => {
+    setShowSidebar(!showSidebar)
+  }, [showSidebar])
 
   const handleStartChat = useCallback((name, gender) => {
     setUserName(name)
@@ -912,7 +914,7 @@ function App() {
   }, [userId])
 
   return (
-    <div className="min-h-screen bg-neuro-base mobile-safe-area">
+    <div className="min-h-screen bg-neuro-base flex flex-col mobile-safe-area">
       {/* Show Landing Screen or Main App */}
       {showPhoneCall ? (
         <PhoneCallScreen onEndCall={handleEndPhoneCall} />
@@ -931,55 +933,54 @@ function App() {
             showMobileMenu={showMobileMenu}
             setShowMobileMenu={setShowMobileMenu}
             closeMobileMenu={closeMobileMenu}
-            fileInputRef={fileInputRef}
-            handleFileUpload={handleFileUpload}
             kyartuMood={kyartuMood}
-            onToggleSidebar={() => {}}
-            showConversationInsights={false}
-            setShowConversationInsights={() => {}}
+            onToggleSidebar={handleToggleSidebar}
           />
 
-          {/* Fixed Sidebar for Desktop */}
-          <aside className="hidden lg:block fixed left-0 top-0 w-80 h-screen z-50">
-            {/* Logo in sidebar */}
-            <div className="absolute top-4 left-4 z-10">
+          {/* Main App Layout */}
+          <div className="flex flex-1 gap-4 p-4 pt-0">
+            {/* Logo in top left corner */}
+            <div className="absolute top-4 left-4 z-30">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
-                <img src="https://i.imgur.com/lMiuQUh.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
               </div>
             </div>
-            <Sidebar
-              isOpen={true}
-              respectMeter={respectMeter}
-              kyartuMood={kyartuMood}
-              chatHistory={chatHistory}
-              savedMoments={savedMoments}
-              userName={userName}
-              onClose={() => {}}
-              onStartPhoneCall={handleStartPhoneCall}
-              onSelectFeature={handleSelectFeature}
-              currentPage={showArmoLobby ? 'Armo Lobby' : selectedFeature || 'Chat'}
-              onReturnToLobby={handleReturnToLobby}
-            />
-          </aside>
+
+            {/* Permanent Sidebar for Desktop, Toggle for Mobile */}
+            <div className="hidden lg:block w-80 flex-shrink-0">
+              <Sidebar
+                isOpen={true}
+                respectMeter={respectMeter}
+                kyartuMood={kyartuMood}
+                chatHistory={chatHistory}
+                savedMoments={savedMoments}
+                userName={userName}
+                onClose={() => {}}
+                onStartPhoneCall={handleStartPhoneCall}
+              />
+            </div>
             
+            {/* Mobile Sidebar */}
+            <AnimatePresence>
+              {showSidebar && (
+                <div className="lg:hidden">
+                  <Sidebar
+                    isOpen={showSidebar}
+                    respectMeter={respectMeter}
+                    kyartuMood={kyartuMood}
+                    chatHistory={chatHistory}
+                    savedMoments={savedMoments}
+                    userName={userName}
+                    onClose={() => setShowSidebar(false)}
+                    onStartPhoneCall={handleStartPhoneCall}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
 
-
-          {/* Main Content Area */}
-          <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-16 pb-24 sm:pb-28 md:pb-32 lg:pl-80 min-h-screen mobile-safe-area">
-            {showArmoLobby ? (
-               <ArmoLobby onSelectFeature={handleSelectFeature} />
-            ) : selectedFeature ? (
-              <div className="p-3 sm:p-4 md:p-6">
-                <button 
-                  onClick={handleReturnToLobby}
-                  className="mb-3 sm:mb-4 neuro-button-secondary px-3 sm:px-4 py-2 text-sm touch-manipulation min-h-[44px] flex items-center gap-2"
-                >
-                  ← Back to Armo Lobby
-                </button>
-                {React.createElement(featureComponents[selectedFeature])}
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4 mobile-chat-height">
+            {/* Chat Messages */}
+            <main className="flex-1 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
                 <AnimatePresence>
                   {messages.map((message) => (
                     <ChatMessage 
@@ -1013,11 +1014,8 @@ function App() {
                 
                 <div ref={messagesEndRef} />
               </div>
-            )}
-            </main>
 
-            {/* Fixed Input Area */}
-            <div className="fixed bottom-0 left-0 lg:left-80 right-0 bg-neuro-base border-t border-neuro-200 z-40">
+              {/* Input Area */}
               <motion.div 
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -1061,7 +1059,17 @@ function App() {
                       <Upload className="w-4 h-4" />
                     </motion.button>
                     
-
+                    {/* Mobile Sidebar Toggle */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={handleToggleSidebar}
+                      className="neuro-button-secondary px-4 py-3 lg:hidden"
+                      title="Toggle Sidebar"
+                    >
+                      <Menu className="w-4 h-4" />
+                    </motion.button>
                     
                     {isLoading ? (
                       <motion.button
@@ -1088,10 +1096,36 @@ function App() {
                 </form>
                 
                 {/* Quick Actions */}
-
+                <div className="flex justify-center mt-3 gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={clearChat}
+                    className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
+                  >
+                    Clear Chat
+                  </motion.button>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
+                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                      isDeepSearchEnabled 
+                        ? 'text-white gradient-primary shadow-lg' 
+                        : 'text-neuro-500 hover:text-neuro-700 neuro-button'
+                    }`}
+                  >
+                    🔍 Deep Search
+                  </motion.button>
+                  
+                  <div className="text-xs text-neuro-400 px-3 py-1">
+                    {messages.length > 1 ? `${messages.length - 1} messages` : 'Start chatting'}
+                  </div>
+                </div>
               </motion.div>
-            </div>
-            )}
+            </main>
+          </div>
         </>
       )}
 

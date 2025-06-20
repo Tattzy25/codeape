@@ -7,8 +7,23 @@ const ArmoLobby = ({ onSelectFeature }) => {
     {
       name: 'ArmoGPT',
       icon: MessageCircle,
-      description: 'Chat with Kyartu AI',
+      description: 'Chat with Armo AI',
       gradient: 'from-green-500 to-emerald-600',
+      available: true,
+      quickFeatures: ['Ask Armo Anything', 'Web Search', 'Image Gen', 'Touchless Voice']
+    },
+    {
+      name: 'Call Armo Ara',
+      icon: Phone,
+      description: 'Get on a live call with Armo',
+      gradient: 'from-blue-500 to-indigo-600',
+      available: true
+    },
+    {
+      name: 'Smoke & Roast Ara',
+      icon: Cigarette,
+      description: 'Get roasted by Armo',
+      gradient: 'from-red-500 to-pink-600',
       available: true
     },
     {
@@ -22,21 +37,14 @@ const ArmoLobby = ({ onSelectFeature }) => {
       name: 'You\'re Hired Ara',
       icon: TrendingUp,
       description: 'Land your dream job',
-      gradient: 'from-blue-500 to-indigo-600',
-      available: true
-    },
-    {
-      name: 'Smoke & Roast Ara',
-      icon: Cigarette,
-      description: 'Get roasted by Kyartu',
-      gradient: 'from-red-500 to-pink-600',
+      gradient: 'from-purple-500 to-violet-600',
       available: true
     },
     {
       name: 'Therapy Session',
       icon: Heart,
       description: 'Talk through your problems',
-      gradient: 'from-purple-500 to-violet-600',
+      gradient: 'from-pink-500 to-rose-600',
       available: true
     },
     {
@@ -50,29 +58,32 @@ const ArmoLobby = ({ onSelectFeature }) => {
       name: 'Find Me Forever Man/Wife',
       icon: Users,
       description: 'Find your perfect match',
-      gradient: 'from-pink-500 to-rose-600',
+      gradient: 'from-amber-500 to-yellow-600',
       available: true
     }
   ];
 
   const comingSoonFeatures = [
     {
-      name: 'Coming Soon',
+      name: 'Armo Talks',
       icon: 'https://i.imgur.com/qRnOL0p.png',
-      description: 'New feature in development',
-      gradient: 'from-cyan-500 to-teal-600'
+      description: 'Confessions caught on HOT MIC',
+      gradient: 'from-cyan-500 to-teal-600',
+      ribbon: 'https://i.imgur.com/I2D3jBN.png'
     },
     {
-      name: 'Coming Soon',
+      name: 'Therapy Mode',
       icon: 'https://i.imgur.com/aTLrV3G.png',
-      description: 'Exciting update coming',
-      gradient: 'from-amber-500 to-yellow-600'
+      description: 'Cry, Roast, Repeat',
+      gradient: 'from-amber-500 to-yellow-600',
+      ribbon: 'https://i.imgur.com/I2D3jBN.png'
     },
     {
-      name: 'Coming Soon',
+      name: 'I... With your boyfriend',
       icon: 'https://i.imgur.com/X2EDY5B.png',
-      description: 'Revolutionary feature ahead',
-      gradient: 'from-lime-500 to-green-600'
+      description: 'Coming soon feature',
+      gradient: 'from-lime-500 to-green-600',
+      ribbon: 'https://i.imgur.com/I2D3jBN.png'
     }
   ];
 
@@ -113,7 +124,7 @@ const ArmoLobby = ({ onSelectFeature }) => {
             zeroFucksgiven()
           </h1>
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-neuro-600 max-w-2xl mx-auto px-2 leading-relaxed">
-            Choose your adventure and let Kyartu guide you through the ultimate Armenian experience
+            Choose your adventure and let Armo guide you through the ultimate Armenian experience
           </p>
         </motion.div>
 
@@ -159,6 +170,19 @@ const ArmoLobby = ({ onSelectFeature }) => {
                       <span className="sm:hidden">✓</span>
                     </span>
                   </div>
+                  
+                  {/* Quick Features for ArmoGPT */}
+                  {feature.quickFeatures && (
+                    <div className="mt-3 sm:mt-4">
+                      <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                        {feature.quickFeatures.map((quickFeature, qIndex) => (
+                          <div key={qIndex} className="text-xs bg-neuro-100 text-neuro-600 px-2 py-1 rounded-md text-center font-medium">
+                            {quickFeature}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
@@ -180,25 +204,24 @@ const ArmoLobby = ({ onSelectFeature }) => {
                 whileHover={{ scale: 1.01 }}
                 className="neuro-card p-4 sm:p-5 md:p-6 opacity-75 relative overflow-hidden touch-manipulation"
               >
-                {/* Coming Soon Badge */}
-                <div className="absolute top-2 right-2 z-10">
-                  <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
-                    Coming Soon
-                  </span>
+                {/* Coming Soon Ribbon */}
+                <div className="absolute top-0 right-0 z-10">
+                  <img 
+                    src={feature.ribbon} 
+                    alt="Coming Soon Ribbon" 
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                    loading="lazy"
+                  />
                 </div>
                 
-                {/* Feature Icon */}
-                <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-3 sm:mb-4 relative mx-auto sm:mx-0`}>
-                  {feature.icon.startsWith('http') ? (
-                    <img 
-                      src={feature.icon} 
-                      alt="Coming Soon Feature" 
-                      className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 object-contain filter brightness-0 invert"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Lock className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
-                  )}
+                {/* Feature Icon - Bigger */}
+                <div className="flex justify-center mb-3 sm:mb-4">
+                  <img 
+                    src={feature.icon} 
+                    alt={feature.name} 
+                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
+                    loading="lazy"
+                  />
                 </div>
                 
                 {/* Feature Info */}

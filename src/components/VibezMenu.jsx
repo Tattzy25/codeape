@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const features = [
   'Armo Lobby',
-  'Call Kyartu Ara',
+  'Call Armo Ara',
   'Make Me Famous Ara',
   'You\'re Hired Ara',
   'Smoke & Roast Ara',

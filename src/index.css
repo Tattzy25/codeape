@@ -81,6 +81,13 @@
     @apply focus:shadow-neuro-pressed transition-all duration-300;
   }
   
+  /* Mobile input field with reduced padding */
+  @media (max-width: 768px) {
+    .neuro-input-field {
+      @apply px-3 py-2;
+    }
+  }
+  
   .neuro-card-elevated {
     @apply neuro-card p-6 transition-all duration-300;
   }

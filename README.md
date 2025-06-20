@@ -1,8 +1,8 @@
-# 🔥 KYARTU - AI Chatbot with Redis Storage
+# 🔥 ARMO - AI Chatbot with Redis Storage
 
-A revolutionary, modern, responsive chatbot application powered by Groq's lightning-fast AI models with advanced Redis-based data persistence. Meet **Kyartu** - your savage, witty AI companion with personality, memory, and attitude. Built with React, Vite, Tailwind CSS, and Redis featuring a beautiful neumorphism design.
+A revolutionary, modern, responsive chatbot application powered by Groq's lightning-fast AI models with advanced Redis-based data persistence. Meet **Armo** - your savage, witty AI companion with personality, memory, and attitude. Built with React, Vite, Tailwind CSS, and Redis featuring a beautiful neumorphism design.
 
-![Kyartu AI](https://img.shields.io/badge/AI-Kyartu%20Powered-red?style=for-the-badge&logo=robot)
+![Armo AI](https://img.shields.io/badge/AI-Armo%20Powered-red?style=for-the-badge&logo=robot)
 ![Redis](https://img.shields.io/badge/Redis-Enabled-DC382D?style=for-the-badge&logo=redis)
 ![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)
 ![Vite](https://img.shields.io/badge/Vite-4.5.0-646CFF?style=for-the-badge&logo=vite)
@@ -10,10 +10,10 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 
 ## ✨ Features
 
-### 🔥 **Meet Kyartu - Your AI with Attitude**
+### 🔥 **Meet Armo - Your AI with Attitude**
 - **Savage Personality**: Witty, roasting, and brutally honest responses
 - **Dynamic Moods**: Flirty, savage, emotional, annoyed - adapts to conversations
-- **Respect Meter**: Tracks your standing with Kyartu (0-100%)
+- **Respect Meter**: Tracks your standing with Armo (0-100%)
 - **Memory System**: Remembers your jokes, preferences, and interactions
 - **Emoji Reactions**: React to messages with custom Armenian-style emojis
 
@@ -38,7 +38,7 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 - Beautiful neumorphism design system
 - Smooth animations with Framer Motion
 - Mobile-first responsive design
-- Kyartu-themed interface with personality
+- Armo-themed interface with personality
 - Accessibility compliant (WCAG 2.1)
 
 ### 📱 **Mobile Optimized**
@@ -77,8 +77,8 @@ A revolutionary, modern, responsive chatbot application powered by Groq's lightn
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Tattzy25/codeape.git
-   cd codeape
+   git clone https://github.com/yourusername/armo-chatbot.git
+   cd armo-chatbot
    ```
 
 2. **Install dependencies**
@@ -138,7 +138,7 @@ VITE_TAVILY_API_KEY=your_tavily_api_key_here
 
 ## 🔥 Redis Storage System
 
-Kyartu uses Redis for advanced data persistence with intelligent TTL management:
+Armo uses Redis for advanced data persistence with intelligent TTL management:
 
 ### Storage Types
 
@@ -147,7 +147,7 @@ Kyartu uses Redis for advanced data persistence with intelligent TTL management:
 | **Chat History** | `chat:session:{sessionId}` | 24h | Recent conversation context |
 | **Session State** | `session:{sessionId}` | 24h | Current mode & page tracking |
 | **Respect Meter** | `meter:respect:{userId}` | 7d | User respect score (0-5) |
-| **Mood Meter** | `meter:mood:{userId}` | 7d | Kyartu's current mood |
+| **Mood Meter** | `meter:mood:{userId}` | 7d | Armo's current mood |
 | **Search Cache** | `search:{queryHash}` | 1h | Cached Tavily search results |
 | **User Jokes** | `jokes:user:{userId}` | 3d | User's funny moments for roasting |
 | **Reactions** | `reaction:message:{messageId}` | 7d | Emoji reaction tracking |
@@ -261,29 +261,30 @@ await redis.set(`lastSeen:user:${userId}`, Date.now(), { ex: 604800 }); // 7 day
 - **7 days** → `604800`
 - **30 days** → `2592000`
 
-## 🎭 Kyartu Personality System
+## 🎭 Armo Personality System
 
 ### Mood States
-- **😏 Flirty**: Charming and playful responses
-- **🔥 Savage**: Roasting mode with witty comebacks
-- **😢 Emotional**: Empathetic and understanding
-- **😤 Annoyed**: Short, sarcastic responses
+Armo maintains different mood states that affect response style:
+- **Happy** 😊 - Cheerful and encouraging
+- **Savage** 🔥 - Roasting and brutally honest  
+- **Flirty** 😏 - Playful and teasing
+- **Emotional** 😢 - Deep and empathetic
+- **Annoyed** 😤 - Short and sarcastic
 
-### Respect Meter (0-100%)
-- **90-100%**: King/Queen status - maximum respect
-- **70-89%**: Good standing - friendly interactions
-- **50-69%**: Neutral - standard responses
-- **30-49%**: Low respect - mild roasting
-- **0-29%**: Clown status - savage mode activated
+### Respect Meter
+Tracks your relationship with Armo (0-100%):
+- **0-25%**: Armo is hostile and sarcastic
+- **26-50%**: Neutral but still roasts you
+- **51-75%**: Friendly with occasional sass
+- **76-100%**: Loyal companion with playful banter
 
 ### Reaction System
-- 🥲 **I felt that** - Emotional connection
-- 💀 **Dead** - Hilarious response
-- 🧿 **Ayo chill** - Too intense
-- 🤌 **That's facts** - Agreement
-- 🥩 **Too raw** - Savage response
-- 🫠 **He's cooking again** - On fire
-- 💘 **Marry me** - Love it
+Users can react to Armo's messages with custom emojis:
+- 🔥 Fire - For savage responses
+- 😂 Laugh - For funny moments  
+- ❤️ Heart - For sweet messages
+- 🤔 Think - For deep thoughts
+- 😤 Angry - For annoying responses
 
 ## 🔧 Setup Instructions
 
@@ -313,7 +314,7 @@ VITE_APP_NAME="Your App Name"
 ## 🏗️ Project Structure
 
 ```
-groq-ai-chatbot/
+armo-ai-chatbot/
 ├── src/
 │   ├── components/          # React components
 │   │   ├── ChatMessage.jsx  # Message display component
@@ -459,6 +460,11 @@ EXPOSE 3000
 CMD ["npm", "run", "preview"]
 ```
 
+```bash
+docker build -t armo-chatbot .
+docker run -p 3000:3000 armo-chatbot
+```
+
 ## 🚀 Performance
 
 ### Optimization Features
@@ -520,29 +526,25 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
    ```
 7. **Open a Pull Request**
 
-## 🎯 Roadmap
+## 🗺️ Roadmap
 
-### Version 2.0
-- [ ] **Voice Input/Output** - Speech recognition and synthesis
-- [ ] **File Upload** - Document and image analysis
-- [ ] **Multi-language** - Internationalization support
-- [ ] **Custom Themes** - User-defined color schemes
-- [x] **Chat Export** - ZIP archive export with JSZip
-- [ ] **Enhanced Export** - PDF, Markdown formats
+### Version 2.0 🎯
+- [ ] Voice chat integration
+- [ ] Custom personality training
+- [ ] Multi-language support
+- [ ] Advanced emotion detection
 
-### Version 2.1
-- [ ] **Conversation Branching** - Multiple conversation threads
-- [ ] **AI Personas** - Predefined AI personalities
-- [ ] **Plugin System** - Extensible functionality
-- [ ] **Collaboration** - Shared conversations
-- [ ] **Advanced Analytics** - Usage insights
+### Version 2.1 🔮
+- [ ] Image generation capabilities
+- [ ] File upload and analysis
+- [ ] Custom theme builder
+- [ ] Advanced analytics dashboard
 
-### Version 3.0
-- [ ] **Multi-provider Support** - OpenAI, Anthropic, etc.
-- [ ] **Local AI Models** - Offline AI capabilities
-- [ ] **Advanced RAG** - Document knowledge base
-- [ ] **API Marketplace** - Third-party integrations
-- [ ] **Enterprise Features** - SSO, admin controls
+### Version 3.0 🚀
+- [ ] Multi-user chat rooms
+- [ ] AI model switching
+- [ ] Plugin system
+- [ ] Mobile app (React Native)
 
 ## 📄 License
 
@@ -550,32 +552,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Groq** for providing lightning-fast AI inference
-- **React Team** for the amazing framework
-- **Tailwind CSS** for the utility-first CSS framework
-- **Framer Motion** for smooth animations
-- **Lucide** for beautiful icons
-- **Vercel** for seamless deployment
+- [Groq](https://groq.com/) for lightning-fast AI inference
+- [Redis](https://redis.io/) for robust data persistence
+- [React](https://reactjs.org/) for the amazing UI framework
+- [Tailwind CSS](https://tailwindcss.com/) for beautiful styling
+- [Framer Motion](https://www.framer.com/motion/) for smooth animations
 
 ## 📞 Support
 
-- **Documentation**: [docs.groq-chatbot.com](https://docs.groq-chatbot.com)
-- **Issues**: [GitHub Issues](https://github.com/Tattzy25/codeape/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Tattzy25/codeape/discussions)
-- **Email**: support@groq-chatbot.com
+If you encounter any issues or have questions:
 
-## 🌟 Show Your Support
-
-If you like this project, please consider:
-
-- ⭐ **Starring** the repository
-- 🐛 **Reporting** bugs and issues
-- 💡 **Suggesting** new features
-- 🤝 **Contributing** to the codebase
-- 📢 **Sharing** with others
+- 📧 Email: support@armo.dev
+- 💬 Discord: [Join our community](https://discord.gg/armo)
+- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/armo-chatbot/issues)
 
 ---
 
-**Built with ❤️ by [Avi](https://github.com/Tattzy25) using Groq's amazing AI technology**
-
-*Experience the future of AI conversations today!*# codeape
+<div align="center">
+  <h3>🌟 Show Your Support</h3>
+  <p>If you found this project helpful, please consider:</p>
+  
+  [![Star this repo](https://img.shields.io/github/stars/yourusername/armo-chatbot?style=social)](https://github.com/yourusername/armo-chatbot)
+  [![Follow on GitHub](https://img.shields.io/github/followers/yourusername?style=social)](https://github.com/yourusername)
+  
+  <p><strong>⭐ Star this repository if it helped you!</strong></p>
+</div>

@@ -102,7 +102,7 @@ const Sidebar = ({
                 </div>
               ) : (
                 <p className="text-xs sm:text-sm text-neuro-500 italic">
-                  No saved moments yet. Bookmark Kyartu's best roasts!
+                  No saved moments yet. Bookmark Armo's best roasts!
                 </p>
               )}
             </div>
