@@ -9,8 +9,10 @@ import ChatMessage from './components/ChatMessage'
 import Modals from './components/Modals'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
+import Header from './components/Header'
 import useSearch from './hooks/useSearch'
 import Sidebar from './components/Sidebar';
+import ArmoLobby from './components/ArmoLobby'
 import * as features from './features';
 
 import PhoneCallScreen from './components/PhoneCallScreen'
@@ -82,6 +84,7 @@ function App() {
   const [kyartuMood, setKyartuMood] = useState('unbothered')
   const [respectMeter, setRespectMeter] = useState(50)
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const [showArmoLobby, setShowArmoLobby] = useState(true);
 
   const featureComponents = {
     'Call Kyartu Ara': features.CallKyartuAra,
@@ -103,9 +106,24 @@ function App() {
   const [showPhoneCall, setShowPhoneCall] = useState(false)
   const [lastCallTime, setLastCallTime] = useState(null)
   const [callCooldownActive, setCallCooldownActive] = useState(false)
+  
+  // Mobile menu state
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  
+  // Mobile menu handler
+  const closeMobileMenu = useCallback(() => {
+    setShowMobileMenu(false)
+  }, [])
+
+  // Handle returning to Armo Lobby
+  const handleReturnToLobby = () => {
+    setSelectedFeature(null)
+    setShowArmoLobby(true)
+  }
 
   const handleSelectFeature = (feature) => {
     setSelectedFeature(feature)
+    setShowArmoLobby(false)
   }
 
   // Refs
@@ -902,32 +920,31 @@ function App() {
         <LandingScreen onStartChat={handleStartChat} onStartPhoneCall={handleStartPhoneCall} />
       ) : (
         <>
-          {/* Fixed Header */}
-          <header className="fixed top-0 left-0 lg:left-80 right-0 h-16 bg-neuro-base border-b border-neuro-200 z-40 flex items-center justify-between px-4">
-            {/* Logo for mobile */}
-            <div className="lg:hidden">
-              <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg">
-                <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            
-            {/* Header Actions */}
-            <div className="flex items-center gap-2 ml-auto">
-              <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                <Upload size={20} />
-              </button>
-              <button onClick={() => setShowSettingsModal(true)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                <Settings size={20} />
-              </button>
-            </div>
-          </header>
+          {/* Header Component */}
+          <Header
+            uploadedFiles={uploadedFiles}
+            isProcessing={isProcessing}
+            triggerFileUpload={triggerFileUpload}
+            fixAndDownload={fixAndDownload}
+            setShowProcessingModal={setShowProcessingModal}
+            setShowSettingsModal={setShowSettingsModal}
+            showMobileMenu={showMobileMenu}
+            setShowMobileMenu={setShowMobileMenu}
+            closeMobileMenu={closeMobileMenu}
+            fileInputRef={fileInputRef}
+            handleFileUpload={handleFileUpload}
+            kyartuMood={kyartuMood}
+            onToggleSidebar={() => {}}
+            showConversationInsights={false}
+            setShowConversationInsights={() => {}}
+          />
 
           {/* Fixed Sidebar for Desktop */}
           <aside className="hidden lg:block fixed left-0 top-0 w-80 h-screen z-50">
             {/* Logo in sidebar */}
             <div className="absolute top-4 left-4 z-10">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
-                <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
+                <img src="https://i.imgur.com/lMiuQUh.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
               </div>
             </div>
             <Sidebar
@@ -940,17 +957,29 @@ function App() {
               onClose={() => {}}
               onStartPhoneCall={handleStartPhoneCall}
               onSelectFeature={handleSelectFeature}
+              currentPage={showArmoLobby ? 'Armo Lobby' : selectedFeature || 'Chat'}
+              onReturnToLobby={handleReturnToLobby}
             />
           </aside>
             
 
 
           {/* Main Content Area */}
-          <main className="pt-16 pb-32 lg:pl-80 min-h-screen">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
-            {selectedFeature ? (
-              React.createElement(featureComponents[selectedFeature])
+          <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-16 pb-24 sm:pb-28 md:pb-32 lg:pl-80 min-h-screen mobile-safe-area">
+            {showArmoLobby ? (
+               <ArmoLobby onSelectFeature={handleSelectFeature} />
+            ) : selectedFeature ? (
+              <div className="p-3 sm:p-4 md:p-6">
+                <button 
+                  onClick={handleReturnToLobby}
+                  className="mb-3 sm:mb-4 neuro-button-secondary px-3 sm:px-4 py-2 text-sm touch-manipulation min-h-[44px] flex items-center gap-2"
+                >
+                  ← Back to Armo Lobby
+                </button>
+                {React.createElement(featureComponents[selectedFeature])}
+              </div>
             ) : (
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4 mobile-chat-height">
                 <AnimatePresence>
                   {messages.map((message) => (
                     <ChatMessage 
@@ -963,7 +992,6 @@ function App() {
                     />
                   ))}
                 </AnimatePresence>
-            )}
                 
                 {/* Typing Indicator */}
                 {isTyping && (
@@ -985,6 +1013,7 @@ function App() {
                 
                 <div ref={messagesEndRef} />
               </div>
+            )}
             </main>
 
             {/* Fixed Input Area */}
@@ -1059,24 +1088,10 @@ function App() {
                 </form>
                 
                 {/* Quick Actions */}
-                <div className="flex justify-center mt-3 gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={clearChat}
-                    className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
-                  >
-                    Clear Chat
-                  </motion.button>
-                  
 
-                  
-                  <div className="text-xs text-neuro-400 px-3 py-1">
-                    {messages.length > 1 ? `${messages.length - 1} messages` : 'Start chatting'}
-                  </div>
-                </div>
               </motion.div>
             </div>
+            )}
         </>
       )}
 
