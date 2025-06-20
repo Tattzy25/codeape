@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, Volume2, Mic, MicOff } from 'lucide-react';
 import elevenlabsService from '../services/elevenlabsService';
-import groqService, { DEFAULT_SETTINGS } from '../services/groqService';
 
 const PhoneCallScreen = ({ onEndCall }) => {
   const [isRinging, setIsRinging] = useState(true);
@@ -25,60 +24,56 @@ const PhoneCallScreen = ({ onEndCall }) => {
   // Armenian greeting for call pickup
   const armenianGreeting = "Aallo... You reached Kyartu, jan. I'm out here making moves, what you need, bro?";
 
-  // Dynamic conversation handler using Groq AI
-  const generateDynamicResponse = async (userInput) => {
-    if (!groqService.isReady()) {
-      console.error("Groq service not initialized. Cannot generate dynamic response.");
-      return "Ay, bro, my brain's not working right now. Try again later, jan.";
+  // Dynamic conversation handler
+  const generateDynamicResponse = (userInput) => {
+    const input = userInput.toLowerCase();
+    conversationContextRef.current.push({ type: 'user', text: userInput });
+    
+    let response = "";
+    
+    // Hair/appearance related
+    if (input.includes('hair') || input.includes('look')) {
+      response = "Ara, you worried about my hair? Bro, I spend more on my barber than you make in a week, jan!";
     }
-
-    // Add user's input to conversation context
-    // conversationContextRef.current.push({ role: 'user', content: userInput });
-    // This is now handled in handleUserSpeech before calling generateDynamicResponse
-
-    // Prepare message history for Groq, sending the last 10 messages for context
-    const history = conversationContextRef.current.slice(-10);
-    const messagesForGroq = [...history, { role: 'user', content: userInput }];
-
-    try {
-      const settings = {
-        ...DEFAULT_SETTINGS,
-        stream: false, // We need the full response before TTS
-        // Consider adjusting temperature for more varied/unhinged roasts if desired
-        // temperature: 0.85, 
-      };
-
-      // The Kyartu persona, including instructions for roasting and language, 
-      // is assumed to be part of the system prompt in groqService.generateDynamicSystemPrompt()
-      const aiResponse = await groqService.sendMessage(messagesForGroq, settings, null, 'kyartu-phonecall-user'); // Added a userId for potential memoryService use
-
-      if (aiResponse && aiResponse.content) {
-        const kyartuResponseText = aiResponse.content.trim();
-        conversationContextRef.current.push({ role: 'assistant', content: kyartuResponseText });
-        return kyartuResponseText;
-      } else {
-        console.error('No content in AI response from Groq.');
-        // Fallback response if AI gives empty content
-        const fallbackResponses = [
-          "Ara, I'm speechless. You actually broke my brain, gyot.",
-          "What? Speak up, I can't hear you over the sound of my success.",
-          "Bro, you talking to me or chewing on rocks? Makes no sense."
-        ];
-        const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-        conversationContextRef.current.push({ role: 'assistant', content: fallback });
-        return fallback;
-      }
-    } catch (error) {
-      console.error('Error getting dynamic response from Groq:', error);
-      const errorFallbackResponses = [
-        "Bro, the connection to my genius is down. Maybe the internet provider is a gyot.",
-        "My brain AI just crashed harder than your credit score, ara.",
-        "Can't think right now, too busy being a legend. Call back later."
+    // Money/business related
+    else if (input.includes('money') || input.includes('business') || input.includes('deal')) {
+      const moneyResponses = [
+        "Why you care how I make money, ara? You trying to copy my moves or something?",
+        "Bro, I made more money today than you'll see all month. Mind your own business, jan!",
+        "Listen ara, my business is my business. You focus on your own hustle, bro!"
       ];
-      const errorFallback = errorFallbackResponses[Math.floor(Math.random() * errorFallbackResponses.length)];
-      // Don't add Groq error responses to context to avoid cluttering it with failures
-      return errorFallback;
+      response = moneyResponses[Math.floor(Math.random() * moneyResponses.length)];
     }
+    // Greeting responses
+    else if (input.includes('hey') || input.includes('hi') || input.includes('hello') || input.includes('what\'s up')) {
+      const greetingResponses = [
+        "Ara, what's good bro? I'm out here grinding, making moves!",
+        "Hey jan, I'm busy counting money but I got time for you. What you need?",
+        "What's up ara? Just closed another deal, business is booming!"
+      ];
+      response = greetingResponses[Math.floor(Math.random() * greetingResponses.length)];
+    }
+    // Roasting/challenging responses
+    else if (input.includes('stupid') || input.includes('dumb') || input.includes('idiot')) {
+      response = "Ara, who you calling stupid? I'm making millions while you're sitting there talking nonsense, jan!";
+    }
+    // Car related
+    else if (input.includes('car') || input.includes('mercedes') || input.includes('bmw')) {
+      response = "Bro, I got three Mercedes in my garage. What you driving, a Honda? Ara, step your game up!";
+    }
+    // Generic challenging responses
+    else {
+      const genericResponses = [
+        "Ara, what you trying to say bro? Speak up, I don't have all day!",
+        "Listen jan, I'm busy making moves. Get to the point!",
+        "Bro, you called me to waste my time? I charge by the minute, ara!",
+        "What's your point, jan? I got business to handle!"
+      ];
+      response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
+    }
+    
+    conversationContextRef.current.push({ type: 'kyartu', text: response });
+    return response;
   };
 
   // Request microphone permission
@@ -123,14 +118,8 @@ const PhoneCallScreen = ({ onEndCall }) => {
           const audioBlob = await elevenlabsService.stopRecording();
           const transcript = await elevenlabsService.speechToText(audioBlob);
           
-          if (transcript && transcript.trim()) {
-            await handleUserSpeech(transcript.trim());
-          } else {
-            console.log("No valid transcript received from STT.");
-            // Optionally, Kyartu could respond to silence/unclear audio here
-            // if (!isSpeaking && isConnected) {
-            //   speakKyartu("Speak up, ara! You mumbling or what?");
-            // }
+          if (transcript.trim()) {
+            await handleUserSpeech(transcript);
           }
         } catch (error) {
           console.error('Speech recognition error:', error);
@@ -186,7 +175,6 @@ const PhoneCallScreen = ({ onEndCall }) => {
         
         // Start with Kyartu's Armenian greeting
         setTimeout(() => {
-          conversationContextRef.current.push({ role: 'assistant', content: armenianGreeting });
           speakKyartu(armenianGreeting);
         }, 500);
       }, 8000); // 8 seconds as requested
@@ -231,12 +219,10 @@ const PhoneCallScreen = ({ onEndCall }) => {
   }, [isConnected, micMuted]);
 
   const handleUserSpeech = async (transcript) => {
-    if (transcript && transcript.trim() && !isSpeaking) {
-      conversationContextRef.current.push({ role: 'user', content: transcript });
-      const responseText = await generateDynamicResponse(transcript);
-      if (responseText) {
-        await speakKyartu(responseText);
-      }
+    if (transcript.trim() && !isSpeaking) {
+      // Generate dynamic response based on user input
+      const response = generateDynamicResponse(transcript);
+      await speakKyartu(response);
     }
   };
 

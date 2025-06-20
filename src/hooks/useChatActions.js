@@ -18,7 +18,7 @@ export const useChatActions = (appState) => {
     chatHistory, setChatHistory,
     savedMoments, setSavedMoments,
     conversationInsights, setConversationInsights,
-    isDeepSearchEnabled,
+
     abortControllerRef
   } = appState
 
@@ -53,7 +53,7 @@ export const useChatActions = (appState) => {
       
       // Deep search if enabled
       let searchResults = null
-      if (isDeepSearchEnabled) {
+  
         try {
           searchResults = await tavilyService.search(inputMessage)
         } catch (error) {
@@ -111,7 +111,7 @@ export const useChatActions = (appState) => {
       setStreamingMessage('')
       abortControllerRef.current = null
     }
-  }, [inputMessage, isLoading, isDeepSearchEnabled, messages, kyartuMood, abortControllerRef])
+  }, [inputMessage, isLoading, messages, kyartuMood, abortControllerRef])
   
   // Stop generation
   const stopGeneration = useCallback(() => {

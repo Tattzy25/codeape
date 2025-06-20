@@ -22,17 +22,14 @@ const ChatInterface = ({
   handlePlayVoice,
   savedMoments,
   triggerFileUpload,
-  handleToggleSidebar,
-  clearChat,
-  isDeepSearchEnabled,
-  setIsDeepSearchEnabled
+  handleToggleSidebar
 }) => {
   return (
-    <div className="h-screen flex flex-col lg:ml-80">
+    <div className="flex flex-col h-full ml-80">
 
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4 pt-24 pb-32">
         <AnimatePresence>
           {messages.map((message) => (
             <ChatMessage 
@@ -68,7 +65,7 @@ const ChatInterface = ({
       </div>
 
       {/* Input Area */}
-      <div className="bg-neuro-base border-t border-neuro-200 p-2 sm:p-4">
+      <div className="bg-neuro-base border-t border-neuro-200 p-2 sm:p-4 fixed bottom-0 left-80 right-0">
         <form onSubmit={handleSubmit} className="chat-input-container">
           <div className="flex-1 relative">
             <textarea
@@ -95,30 +92,6 @@ const ChatInterface = ({
           </div>
           
           <div className="flex gap-2">
-            {/* Upload Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              type="button"
-              onClick={triggerFileUpload}
-              className="neuro-button-secondary px-4 py-3 min-h-[44px]"
-              title="Upload Files"
-            >
-              <Upload className="w-4 h-4" />
-            </motion.button>
-            
-            {/* Mobile Sidebar Toggle */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              type="button"
-              onClick={handleToggleSidebar}
-              className="neuro-button-secondary px-4 py-3 lg:hidden min-h-[44px]"
-              title="Toggle Sidebar"
-            >
-              <Menu className="w-4 h-4" />
-            </motion.button>
-            
             {isLoading ? (
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -143,30 +116,7 @@ const ChatInterface = ({
           </div>
         </form>
         
-        {/* Quick Actions */}
-        <div className="flex justify-center mt-3 gap-2 flex-wrap">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={clearChat}
-            className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
-          >
-            Clear Chat
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
-            className={`text-xs px-3 py-1 rounded-full transition-colors ${
-              isDeepSearchEnabled 
-                ? 'text-white gradient-primary shadow-lg' 
-                : 'text-neuro-500 hover:text-neuro-700 neuro-button'
-            }`}
-          >
-            🔍 Deep Search
-          </motion.button>
-        </div>
+
       </div>
     </div>
   )

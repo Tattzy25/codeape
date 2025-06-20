@@ -3,15 +3,18 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    port: 3000,
+  },
   plugins: [
     react(),
     VitePWA({
-n      registerType: 'autoUpdate',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'kyartu Vzgo',
         short_name: 'kyartu Vzgo',
-        description: 'utenk, xmenk, kef anenk',
+        description: 'Revolutionary AI-powered chatbot with lightning-fast responses',
         theme_color: '#667eea',
         background_color: '#e0e5ec',
         display: 'standalone',

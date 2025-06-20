@@ -9,16 +9,17 @@ import ChatMessage from './components/ChatMessage'
 import Modals from './components/Modals'
 import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
-import Sidebar from './components/Sidebar'
-import Header from './components/Header'
+import useSearch from './hooks/useSearch'
+import Sidebar from './components/Sidebar';
+import * as features from './features';
+
 import PhoneCallScreen from './components/PhoneCallScreen'
-import SmokeAndRoast from './components/SmokeAndRoast'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
 import redisService from './services/redisService'
 import { storageService } from './services/storageService'
-import tavilyService from './services/tavilyService'
+
 import elevenlabsService from './services/elevenlabsService'
 
 // Initialize services
@@ -46,6 +47,7 @@ const RESPECT_KEYWORDS = {
 }
 
 function App() {
+  const { isSearching, handleSearchCommand } = useSearch();
   // Generate unique IDs for Redis
   const [sessionId] = useState(() => redisService.generateSessionId());
   const [userId] = useState(() => redisService.generateUserId());
@@ -70,8 +72,8 @@ function App() {
   const [processedFiles, setProcessedFiles] = useState([])
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false)
+
+
   
   // Kyartu Vzgo specific state
   const [showLandingScreen, setShowLandingScreen] = useState(true)
@@ -79,7 +81,21 @@ function App() {
   const [userGender, setUserGender] = useState('neutral')
   const [kyartuMood, setKyartuMood] = useState('unbothered')
   const [respectMeter, setRespectMeter] = useState(50)
-  const [showSidebar, setShowSidebar] = useState(false)
+  const [selectedFeature, setSelectedFeature] = useState(null);
+
+  const featureComponents = {
+    'Call Kyartu Ara': features.CallKyartuAra,
+    'Make Me Famous Ara': features.MakeMeFamousAra,
+    'You\'re Hired Ara': features.YoureHiredAra,
+    'Smoke & Roast Ara': features.SmokeAndRoastAra,
+    'Therapy Session': features.TherapySession,
+    'Give Me Alibi Ara': features.GiveMeAlibiAra,
+    'Find Me Forever Man/Wife': features.FindMeForeverManWife,
+    'Coming Soon 1': features.ComingSoon1,
+    'Coming Soon 2': features.ComingSoon2,
+    'Coming Soon 3': features.ComingSoon3,
+  };
+
   const [savedMoments, setSavedMoments] = useState([])
   const [chatHistory, setChatHistory] = useState([])
   
@@ -88,8 +104,9 @@ function App() {
   const [lastCallTime, setLastCallTime] = useState(null)
   const [callCooldownActive, setCallCooldownActive] = useState(false)
 
-  // Smoke and Roast state
-  const [showSmokeAndRoast, setShowSmokeAndRoast] = useState(false)
+  const handleSelectFeature = (feature) => {
+    setSelectedFeature(feature)
+  }
 
   // Refs
   const inputRef = useRef(null)
@@ -288,42 +305,7 @@ function App() {
   }, [userId, saveToStorage])
 
   // Handle search commands
-  const handleSearchCommand = useCallback(async (userMessage, newMessages) => {
-    const searchQuery = userMessage.content.replace(/^\/(search|web|tavily)\s*/i, '').trim();
-    
-    if (!searchQuery) {
-      throw new Error('Please provide a search query. Example: /search renewable energy benefits');
-    }
 
-    setStreamingMessage(isDeepSearchEnabled ? '🔍 Deep searching the web...' : '🔍 Searching the web...');
-    const searchResults = isDeepSearchEnabled 
-      ? await tavilyService.advancedSearch(searchQuery)
-      : await tavilyService.search(searchQuery);
-  
-    const formattedResults = tavilyService.formatResults(searchResults);
-      
-    const aiMessage = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: formattedResults.formatted,
-      timestamp: new Date().toISOString(),
-      isSearchResult: true,
-      searchQuery: searchQuery,
-      resultCount: formattedResults.resultCount
-    };
-
-    const finalMessages = [...newMessages, aiMessage];
-    setMessages(finalMessages);
-    
-    try {
-      await redisService.storeChatHistory(sessionId, finalMessages);
-      await redisService.cacheSearchResults(searchQuery, searchResults);
-      await redisService.updateLastSeen(userId);
-    } catch (error) {
-      console.error('Failed to save to Redis:', error);
-      saveToStorage(STORAGE_KEYS.CHAT_HISTORY, finalMessages);
-    }
-  }, [isDeepSearchEnabled, sessionId, userId, saveToStorage, setStreamingMessage, setMessages]);
 
   // Memoized conversation history preparation
   const prepareConversationHistory = useMemo(() => {
@@ -413,6 +395,12 @@ function App() {
       return;
     }
 
+    if (inputMessage.toLowerCase().startsWith('/search')) {
+      handleSearchCommand(inputMessage.substring(8), messages, setMessages, setIsLoading, kyartuMood, abortControllerRef);
+      setInputMessage(''); // Clear input after command
+      return;
+    }
+
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -430,13 +418,7 @@ function App() {
     try {
       abortControllerRef.current = new AbortController();
 
-      const searchCommands = ['/search', '/web', '/tavily'];
-      const isSearchCommand = searchCommands.some(cmd => userMessage.content.toLowerCase().startsWith(cmd));
-      
-      if (isSearchCommand) {
-        await handleSearchCommand(userMessage, newMessages);
-        return;
-      }
+
 
       await handleChatMessage(userMessage, newMessages);
 
@@ -475,7 +457,7 @@ function App() {
       abortControllerRef.current = null
       inputRef.current?.focus()
     }
-  }, [inputMessage, messages, settings, isLoading, saveToStorage, isDeepSearchEnabled, userId, sessionId, kyartuMood])
+  }, [inputMessage, messages, settings, isLoading, saveToStorage, userId, sessionId, kyartuMood])
 
   // Handle emoji reactions
   const handleReaction = useCallback(async (messageId, emoji) => {
@@ -815,18 +797,12 @@ function App() {
     })
   }, [uploadedFiles, processFilesWithAI, generateDownload])
 
-  // Close mobile menu when clicking outside
-  const closeMobileMenu = useCallback(() => {
-    setShowMobileMenu(false)
-  }, [])
 
   // Kyartu-specific handlers
 
 
 
-  const handleToggleSidebar = useCallback(() => {
-    setShowSidebar(!showSidebar)
-  }, [showSidebar])
+
 
   const handleStartChat = useCallback((name, gender) => {
     setUserName(name)
@@ -878,19 +854,6 @@ function App() {
     setShowLandingScreen(false)
   }, [lastCallTime, userId])
 
-  const handleStartSmokeAndRoast = () => {
-    setShowLandingScreen(false)
-    setShowPhoneCall(false) // Ensure other modals/screens are hidden
-    setShowSmokeAndRoast(true)
-  }
-
-  const handleGoBackToChat = () => {
-    setShowSmokeAndRoast(false)
-    setShowPhoneCall(false)
-    setShowLandingScreen(false) // Go back to main chat, not landing
-    // Optionally, re-initialize chat or scroll to bottom etc.
-  }
-
   const handleEndPhoneCall = useCallback(() => {
     setShowPhoneCall(false)
     setShowLandingScreen(true)
@@ -931,84 +894,63 @@ function App() {
   }, [userId])
 
   return (
-    <div className="min-h-screen bg-neuro-base flex flex-col mobile-safe-area">
+    <div className="min-h-screen bg-neuro-base mobile-safe-area">
       {/* Show Landing Screen or Main App */}
-      {showSmokeAndRoast ? (
-        <SmokeAndRoast 
-          onGoBackToChat={handleGoBackToChat} 
-          userName={userName} 
-        />
-      ) : showPhoneCall ? (
-        <PhoneCallScreen onEndCall={handleEndPhoneCall} userName={userName} apiKey={apiKey} />
+      {showPhoneCall ? (
+        <PhoneCallScreen onEndCall={handleEndPhoneCall} />
       ) : showLandingScreen ? (
-        <LandingScreen 
-          onStartChat={handleStartChat} 
-          onStartPhoneCall={handleStartPhoneCall} 
-          onStartSmokeAndRoast={handleStartSmokeAndRoast} 
-        />
+        <LandingScreen onStartChat={handleStartChat} onStartPhoneCall={handleStartPhoneCall} />
       ) : (
         <>
-          {/* Header Component */}
-          <Header
-            uploadedFiles={uploadedFiles}
-            isProcessing={isProcessing}
-            triggerFileUpload={triggerFileUpload}
-            fixAndDownload={fixAndDownload}
-            setShowProcessingModal={setShowProcessingModal}
-            setShowSettingsModal={setShowSettingsModal}
-            showMobileMenu={showMobileMenu}
-            setShowMobileMenu={setShowMobileMenu}
-            closeMobileMenu={closeMobileMenu}
-            kyartuMood={kyartuMood}
-            onToggleSidebar={handleToggleSidebar}
-          />
+          {/* Fixed Header */}
+          <header className="fixed top-0 left-0 lg:left-80 right-0 h-16 bg-neuro-base border-b border-neuro-200 z-40 flex items-center justify-between px-4">
+            {/* Logo for mobile */}
+            <div className="lg:hidden">
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg">
+                <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
+              </div>
+            </div>
+            
+            {/* Header Actions */}
+            <div className="flex items-center gap-2 ml-auto">
+              <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <Upload size={20} />
+              </button>
+              <button onClick={() => setShowSettingsModal(true)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <Settings size={20} />
+              </button>
+            </div>
+          </header>
 
-          {/* Main App Layout */}
-          <div className="flex flex-1 gap-4 p-4 pt-0">
-            {/* Logo in top left corner */}
-            <div className="absolute top-4 left-4 z-30">
+          {/* Fixed Sidebar for Desktop */}
+          <aside className="hidden lg:block fixed left-0 top-0 w-80 h-screen z-50">
+            {/* Logo in sidebar */}
+            <div className="absolute top-4 left-4 z-10">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
                 <img src="/logo.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
               </div>
             </div>
-
-            {/* Permanent Sidebar for Desktop, Toggle for Mobile */}
-            <div className="hidden lg:block w-80 flex-shrink-0">
-              <Sidebar
-                isOpen={true}
-                respectMeter={respectMeter}
-                kyartuMood={kyartuMood}
-                chatHistory={chatHistory}
-                savedMoments={savedMoments}
-                userName={userName}
-                onClose={() => {}}
-                onStartPhoneCall={handleStartPhoneCall}
-                onStartSmokeAndRoast={handleStartSmokeAndRoast}
-              />
-            </div>
+            <Sidebar
+              isOpen={true}
+              respectMeter={respectMeter}
+              kyartuMood={kyartuMood}
+              chatHistory={chatHistory}
+              savedMoments={savedMoments}
+              userName={userName}
+              onClose={() => {}}
+              onStartPhoneCall={handleStartPhoneCall}
+              onSelectFeature={handleSelectFeature}
+            />
+          </aside>
             
-            {/* Mobile Sidebar */}
-            <AnimatePresence>
-              {showSidebar && (
-                <div className="lg:hidden">
-                  <Sidebar
-                    isOpen={showSidebar}
-                    respectMeter={respectMeter}
-                    kyartuMood={kyartuMood}
-                    chatHistory={chatHistory}
-                    savedMoments={savedMoments}
-                    userName={userName}
-                    onClose={() => setShowSidebar(false)}
-                    onStartPhoneCall={handleStartPhoneCall}
-                    onStartSmokeAndRoast={handleStartSmokeAndRoast}
-                  />
-                </div>
-              )}
-            </AnimatePresence>
 
-            {/* Chat Messages */}
-            <main className="flex-1 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
+
+          {/* Main Content Area */}
+          <main className="pt-16 pb-32 lg:pl-80 min-h-screen">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
+            {selectedFeature ? (
+              React.createElement(featureComponents[selectedFeature])
+            ) : (
                 <AnimatePresence>
                   {messages.map((message) => (
                     <ChatMessage 
@@ -1021,6 +963,7 @@ function App() {
                     />
                   ))}
                 </AnimatePresence>
+            )}
                 
                 {/* Typing Indicator */}
                 {isTyping && (
@@ -1042,8 +985,10 @@ function App() {
                 
                 <div ref={messagesEndRef} />
               </div>
+            </main>
 
-              {/* Input Area */}
+            {/* Fixed Input Area */}
+            <div className="fixed bottom-0 left-0 lg:left-80 right-0 bg-neuro-base border-t border-neuro-200 z-40">
               <motion.div 
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -1087,17 +1032,7 @@ function App() {
                       <Upload className="w-4 h-4" />
                     </motion.button>
                     
-                    {/* Mobile Sidebar Toggle */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={handleToggleSidebar}
-                      className="neuro-button-secondary px-4 py-3 lg:hidden"
-                      title="Toggle Sidebar"
-                    >
-                      <Menu className="w-4 h-4" />
-                    </motion.button>
+
                     
                     {isLoading ? (
                       <motion.button
@@ -1134,26 +1069,14 @@ function App() {
                     Clear Chat
                   </motion.button>
                   
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                      isDeepSearchEnabled 
-                        ? 'text-white gradient-primary shadow-lg' 
-                        : 'text-neuro-500 hover:text-neuro-700 neuro-button'
-                    }`}
-                  >
-                    🔍 Deep Search
-                  </motion.button>
+
                   
                   <div className="text-xs text-neuro-400 px-3 py-1">
                     {messages.length > 1 ? `${messages.length - 1} messages` : 'Start chatting'}
                   </div>
                 </div>
               </motion.div>
-            </main>
-          </div>
+            </div>
         </>
       )}
 

@@ -1,4 +1,4 @@
-  /* App.css - Main application styles */
+/* App.css - Main application styles */
 
 /* Basic reset and layout */
 * {
@@ -89,6 +89,52 @@ body {
 
 .fade-in {
   animation: fadeIn 0.3s ease-out;
+}
+
+/* Fixed Layout Styles */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rem;
+  z-index: 40;
+}
+
+.fixed-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 20rem;
+  height: 100vh;
+  z-index: 50;
+}
+
+.fixed-input {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+}
+
+.main-content {
+  padding-top: 4rem;
+  padding-bottom: 8rem;
+}
+
+@media (min-width: 1024px) {
+  .fixed-header {
+    left: 20rem;
+  }
+  
+  .fixed-input {
+    left: 20rem;
+  }
+  
+  .main-content {
+    padding-left: 20rem;
+  }
 }
 
 /* Responsive utilities */

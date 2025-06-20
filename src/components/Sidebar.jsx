@@ -1,7 +1,9 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp, Phone, Dice1, Star, Users, Cigarette, Shield } from 'lucide-react'
-import NeumorphicButton from './GoldenButton'
+import NeumorphicButton from './GoldenButton';
+import logo from '/logo.png';
+import VibezMenu from './VibezMenu'
 
 const Sidebar = ({ 
   isOpen = true, 
@@ -14,7 +16,8 @@ const Sidebar = ({
   onSelectChat,
   onToggleMoment,
   onStartPhoneCall,
-  onStartSmokeAndRoast // Add new prop
+  onStartSmokeAndRoast, // Add new prop
+  onSelectFeature
 }) => {
   const getMoodIcon = (mood) => {
     const moodIcons = {
@@ -57,141 +60,17 @@ const Sidebar = ({
         animate={{ x: 0 }}
         exit={{ x: -300 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed lg:sticky lg:top-4 left-0 top-0 h-full lg:h-[calc(100vh-2rem)] w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
+        className="fixed top-0 left-0 h-screen w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar"
       >
         {/* Header */}
-        <div className="p-6 border-b border-neuro-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gradient">Kyartu's Den</h2>
-            <button
-              onClick={onClose}
-              className="neuro-button p-2 lg:hidden"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-              
-              {/* Kyartu's Current Mood */}
-              <div className="neuro-card p-4 mb-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">{getMoodIcon(kyartuMood)}</span>
-                  <div>
-                    <p className="font-medium text-neuro-700">Current Mood</p>
-                    <p className="text-sm text-neuro-500 capitalize">{kyartuMood}</p>
-                  </div>
-                </div>
-                <p className="text-xs text-neuro-400 italic">
-                  "⚠️ Kyartu is currently: {kyartuMood} + Unimpressed"
-                </p>
-              </div>
-            </div>
+        <div className="p-6 flex flex-col items-center border-b border-neuro-300">
+          <img src={logo} alt="Logo" className="w-24 h-24 mb-4" />
+          <VibezMenu onSelectFeature={onSelectFeature} />
+        </div>
 
-            {/* Respect Meter */}
-            <div className="p-6 border-b border-neuro-300">
-              <div className="flex items-center gap-2 mb-3">
-                <Flame className="w-5 h-5 text-orange-500" />
-                <h3 className="font-bold text-neuro-700">Respect Meter</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {/* Progress Bar */}
-                <div className="relative">
-                  <div className="w-full h-3 bg-neuro-200 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${respectMeter}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full"
-                    />
-                  </div>
-                  <div className="absolute -top-1 -right-1 text-xs font-bold text-neuro-600">
-                    {respectMeter}%
-                  </div>
-                </div>
-                
-                {/* Respect Level Badge */}
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${respectLevel.bg} ${respectLevel.color}`}>
-                  <TrendingUp className="w-4 h-4" />
-                  {respectLevel.level}
-                </div>
-                
-                <p className="text-xs text-neuro-500">
-                  Gain respect by taking roasts like a champ and matching his energy
-                </p>
-              </div>
-            </div>
+        
 
-            {/* Kyartu's Services */}
-            <div className="p-6 border-b border-neuro-300">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageCircle className="w-5 h-5 text-blue-500" />
-                <h3 className="font-bold text-neuro-700">Kyartu's Services</h3>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <NeumorphicButton 
-                   className="h-16 rounded-xl"
-                   onClick={onStartPhoneCall}
-                 >
-                   <div className="flex flex-col items-center gap-1">
-                     <Phone className="w-5 h-5" />
-                     <span className="text-xs font-medium text-center">Call Kyartu Ara</span>
-                   </div>
-                 </NeumorphicButton>
-                
-                <NeumorphicButton className="h-16 rounded-xl">
-                  <div className="flex flex-col items-center gap-1">
-                    <Dice1 className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Hit the Slots Ara</span>
-                  </div>
-                </NeumorphicButton>
-                
-                <NeumorphicButton className="h-16 rounded-xl">
-                  <div className="flex flex-col items-center gap-1">
-                    <Star className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Make Me Famous Ara</span>
-                  </div>
-                </NeumorphicButton>
-                
-                <NeumorphicButton className="h-16 rounded-xl">
-                  <div className="flex flex-col items-center gap-1">
-                    <Users className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">You're Hired Ara</span>
-                  </div>
-                </NeumorphicButton>
-                
-                <NeumorphicButton 
-                  className="h-16 rounded-xl"
-                  onClick={onStartSmokeAndRoast} // Connect the handler
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <Cigarette className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Smoke & Roast Ara</span>
-                  </div>
-                </NeumorphicButton>
-                
-                <NeumorphicButton className="h-16 rounded-xl">
-                  <div className="flex flex-col items-center gap-1">
-                    <MessageCircle className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Marriage Advice Ara</span>
-                  </div>
-                </NeumorphicButton>
-                
-                <NeumorphicButton className="h-16 rounded-xl">
-                  <div className="flex flex-col items-center gap-1">
-                    <Shield className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Give Me Alibi Ara</span>
-                  </div>
-                </NeumorphicButton>
-                
-                <NeumorphicButton className="h-16 rounded-xl">
-                  <div className="flex flex-col items-center gap-1">
-                    <Heart className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Find Me Forever Man/Wife</span>
-                  </div>
-                </NeumorphicButton>
-              </div>
-            </div>
+            
 
             {/* Persona Switcher (Coming Soon) */}
             <div className="p-6 border-b border-neuro-300">

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Sparkles, Zap, Dice1, Star, Phone, Users, Cigarette, Heart, Shield } from 'lucide-react';
 import PropTypes from 'prop-types';
-import NeumorphicButton from './GoldenButton';
+import NeumorphicButton from './NeumorphicButton';
 
 
 

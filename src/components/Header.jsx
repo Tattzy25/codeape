@@ -23,7 +23,7 @@ const Header = ({
     <motion.header 
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 neuro-card mt-2 mb-0 px-4 py-2 flex items-center justify-between relative z-20 max-w-4xl mx-auto"
+      className="fixed top-0 left-80 right-0 neuro-card px-4 py-2 flex items-center justify-between z-20"
     >
       <div className="flex items-center gap-3">
         <div className="flex-1">

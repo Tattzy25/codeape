@@ -54,7 +54,7 @@ export const useAppState = () => {
     autoScroll: true,
     theme: 'dark'
   })
-  const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false)
+
   
   // Refs
   const messagesEndRef = useRef(null)
@@ -172,7 +172,7 @@ export const useAppState = () => {
     isProcessing, setIsProcessing,
     processingOptions, setProcessingOptions,
     settings, setSettings,
-    isDeepSearchEnabled, setIsDeepSearchEnabled,
+
     
     // Refs
     messagesEndRef,

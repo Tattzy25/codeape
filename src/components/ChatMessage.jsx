@@ -131,7 +131,7 @@ const formatUsage = (usage) => {
   }
 }
 
-const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice }) => {
+const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice, onUpload, onSettings }) => {
   const isUser = message.role === 'user'
   const isError = message.isError
   const usage = formatUsage(message.usage)
@@ -174,6 +174,17 @@ const ChatMessage = memo(({ message, onReaction, onSaveMoment, onPlayVoice }) =>
       toast.success(isBookmarked ? 'Moment removed' : 'Moment saved!')
     }
   }, [onSaveMoment, message, isUser, isBookmarked])
+
+  const ActionButtons = () => (
+    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2">
+        <button onClick={onUpload} className="neuro-button p-2">
+            <Upload size={16} />
+        </button>
+        <button onClick={onSettings} className="neuro-button p-2">
+            <Settings size={16} />
+        </button>
+    </div>
+  );
 
   const messageVariants = {
     initial: { 
