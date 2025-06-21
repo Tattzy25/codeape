@@ -1,12 +1,15 @@
 {
-  "name": "armo",
+  "name": "armo-gpt",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Armo - AI-powered chatbot with Groq integration",
+  "description": "Armo GPT is an AI-powered Armenian chatbot with Groq integration",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000",
     "build": "vite build",
+    "build:debug": "cross-env NODE_ENV=development vite build --mode development",
+    "build:analyze": "vite build && npx vite-bundle-analyzer dist",
+    "build:verbose": "cross-env DEBUG=vite:* vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"no tests yet\" && exit 0",

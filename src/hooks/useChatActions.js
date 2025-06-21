@@ -53,31 +53,16 @@ export const useChatActions = (appState) => {
       
       // Deep search if enabled
       let searchResults = null
-  
+      if (settings.deepSearch) {
         try {
           searchResults = await tavilyService.search(inputMessage)
         } catch (error) {
           console.error('Search error:', error)
+          searchResults = null
         }
       }
-      
-      // Get response from AI
-      try {
-        const searchResults = await tavilyService.search(inputMessage)
-      } catch (error) {
-        console.error('Search error:', error)
-        searchResults = null
-      }
 
-      try {
-        const searchResults = await tavilyService.search(inputMessage)
-      } catch (error) {
-        console.error('Search error:', error)
-        searchResults = null
-      }
-
-      try {
-        const response = await groqService.chat(
+      const response = await groqService.chat(
         messages.concat(userMessage),
         searchResults,
         abortControllerRef.current.signal,
