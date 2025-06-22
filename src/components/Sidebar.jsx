@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp, Phone, Dice1, Star, Users, Cigarette, Shield } from 'lucide-react'
+import { X, Heart, Flame, Lock, Bookmark, MessageCircle, TrendingUp, Phone, Dice1, Star, Users, Cigarette, Shield, ChevronLeft, ChevronRight } from 'lucide-react'
 import NeumorphicButton from './GoldenButton';
 
 import VibezMenu from './VibezMenu'
@@ -19,8 +19,10 @@ const Sidebar = ({
   onStartSmokeAndRoast, // Add new prop
   onSelectFeature,
   currentPage = 'Armo Lobby',
-  onReturnToLobby
+  onReturnToLobby,
+  onToggleCollapse
 }) => {
+  const [collapsed, setCollapsed] = useState(false);
   const getMoodIcon = (mood) => {
     const moodIcons = {
       chill: '😎',
@@ -62,16 +64,35 @@ const Sidebar = ({
         animate={{ x: 0 }}
         exit={{ x: -300 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed top-0 left-0 h-screen w-72 sm:w-80 bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar mobile-safe-area"
+        className={`fixed top-0 left-0 h-screen ${collapsed ? 'w-16' : 'w-72 sm:w-80'} bg-neuro-base z-50 neuro-card overflow-y-auto custom-scrollbar mobile-safe-area transition-all duration-300`}
       >
+        {/* Toggle Button */}
+        <button 
+          onClick={() => {
+            const newCollapsed = !collapsed;
+            setCollapsed(newCollapsed);
+            if (onToggleCollapse) {
+              onToggleCollapse(newCollapsed);
+            }
+          }}
+          className="absolute top-4 right-0 transform translate-x-1/2 w-8 h-8 rounded-full bg-neuro-base neuro-button-secondary flex items-center justify-center z-50 shadow-lg"
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
         {/* Header */}
-        <div className="p-4 sm:p-6 flex flex-col items-center border-b border-neuro-300">
-          <img src="https://i.imgur.com/V0Jx5e7.png" alt="Logo" className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 mb-3 sm:mb-4" />
-          <VibezMenu 
-            onSelectFeature={onSelectFeature} 
-            currentPage={currentPage} 
-            onReturnToLobby={onReturnToLobby}
-          />
+        <div className={`p-4 sm:p-6 flex flex-col items-center border-b border-neuro-300 ${collapsed ? 'items-center justify-center' : ''}`}>
+          {collapsed ? (
+            <img src="https://i.imgur.com/V0Jx5e7.png" alt="Logo" className="w-10 h-10 rounded-full" />
+          ) : (
+            <>
+              <img src="https://i.imgur.com/V0Jx5e7.png" alt="Logo" className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 mb-3 sm:mb-4" />
+              <VibezMenu 
+                onSelectFeature={onSelectFeature} 
+                currentPage={currentPage} 
+                onReturnToLobby={onReturnToLobby}
+              />
+            </>
+          )}
         </div>
 
         
@@ -81,65 +102,69 @@ const Sidebar = ({
             
 
             {/* Saved Moments */}
-            <div className="p-4 sm:p-6 border-b border-neuro-300">
-              <div className="flex items-center gap-2 mb-3">
-                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                <h3 className="font-bold text-neuro-700 text-sm sm:text-base">Saved Moments</h3>
-              </div>
-              
-              {savedMoments.length > 0 ? (
-                <div className="space-y-2 max-h-32 sm:max-h-40 overflow-y-auto custom-scrollbar">
-                  {savedMoments.map((moment, index) => (
-                    <div key={index} className="neuro-button p-2 sm:p-3 text-left touch-manipulation">
-                      <p className="text-xs sm:text-sm text-neuro-700 line-clamp-2">
-                        "{moment.content}"
-                      </p>
-                      <p className="text-xs text-neuro-400 mt-1">
-                        {new Date(moment.timestamp).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
+            {!collapsed && (
+              <div className="p-4 sm:p-6 border-b border-neuro-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                  <h3 className="font-bold text-neuro-700 text-sm sm:text-base">Saved Moments</h3>
                 </div>
-              ) : (
-                <p className="text-xs sm:text-sm text-neuro-500 italic">
-                  No saved moments yet. Bookmark Kyartu's best roasts!
-                </p>
-              )}
-            </div>
+                
+                {savedMoments.length > 0 ? (
+                  <div className="space-y-2 max-h-32 sm:max-h-40 overflow-y-auto custom-scrollbar">
+                    {savedMoments.map((moment, index) => (
+                      <div key={index} className="neuro-button p-2 sm:p-3 text-left touch-manipulation">
+                        <p className="text-xs sm:text-sm text-neuro-700 line-clamp-2">
+                          "{moment.content}"
+                        </p>
+                        <p className="text-xs text-neuro-400 mt-1">
+                          {new Date(moment.timestamp).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm text-neuro-500 italic">
+                    No saved moments yet. Bookmark Kyartu's best roasts!
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Chat History */}
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
-                <h3 className="font-bold text-neuro-700 text-sm sm:text-base">Chat History</h3>
-              </div>
-              
-              {chatHistory.length > 0 ? (
-                <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
-                  {chatHistory.map((chat, index) => (
-                    <button
-                      key={index}
-                      onClick={() => onSelectChat(chat)}
-                      className="neuro-button p-2 sm:p-3 w-full text-left hover:shadow-neuro-hover transition-all touch-manipulation min-h-[44px] flex flex-col justify-center"
-                    >
-                      <p className="text-xs sm:text-sm text-neuro-700 font-medium">
-                        {chat.title || `Chat ${index + 1}`}
-                      </p>
-                      <p className="text-xs text-neuro-400">
-                        {new Date(chat.timestamp).toLocaleDateString()}
-                      </p>
-                      <p className="text-xs text-neuro-500 mt-1 line-clamp-1">
-                        {chat.lastMessage}
-                      </p>
-                    </button>
-                  ))}
+            {!collapsed && (
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                  <h3 className="font-bold text-neuro-700 text-sm sm:text-base">Chat History</h3>
                 </div>
-              ) : (
-                <p className="text-xs sm:text-sm text-neuro-500 italic">
-                  No chat history yet. Start your first conversation!
-                </p>
-              )}
-            </div>
+                
+                {chatHistory.length > 0 ? (
+                  <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto custom-scrollbar">
+                    {chatHistory.map((chat, index) => (
+                      <button
+                        key={index}
+                        onClick={() => onSelectChat(chat)}
+                        className="neuro-button p-2 sm:p-3 w-full text-left hover:shadow-neuro-hover transition-all touch-manipulation min-h-[44px] flex flex-col justify-center"
+                      >
+                        <p className="text-xs sm:text-sm text-neuro-700 font-medium">
+                          {chat.title || `Chat ${index + 1}`}
+                        </p>
+                        <p className="text-xs text-neuro-400">
+                          {new Date(chat.timestamp).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-neuro-500 mt-1 line-clamp-1">
+                          {chat.lastMessage}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm text-neuro-500 italic">
+                    No chat history yet. Start your first conversation!
+                  </p>
+                )}
+              </div>
+            )}
        </motion.div>
      </>
    )
@@ -159,6 +184,7 @@ Sidebar.propTypes = {
   onToggleMoment: PropTypes.func.isRequired,
   onStartPhoneCall: PropTypes.func.isRequired,
   onStartSmokeAndRoast: PropTypes.func.isRequired, // Add prop type
+  onToggleCollapse: PropTypes.func,
 };
 
 export default Sidebar

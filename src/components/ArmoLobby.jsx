@@ -5,8 +5,8 @@ import { Star, Users, Phone, TrendingUp, Shield, Cigarette, Heart, Lock, Message
 const ArmoLobby = ({ onSelectFeature }) => {
   const features = [
     {
-      name: 'ArmoGPT',
-      icon: MessageCircle,
+      name: 'Call Kyartu Ara',
+      icon: Phone,
       description: 'Chat with Armo',
       gradient: 'from-green-500 to-emerald-600',
       available: true
@@ -57,19 +57,19 @@ const ArmoLobby = ({ onSelectFeature }) => {
 
   const comingSoonFeatures = [
     {
-      name: 'Coming Soon',
+      name: 'Coming Soon 1',
       icon: 'https://i.imgur.com/qRnOL0p.png',
       description: 'New feature in development',
       gradient: 'from-cyan-500 to-teal-600'
     },
     {
-      name: 'Coming Soon',
+      name: 'Coming Soon 2',
       icon: 'https://i.imgur.com/aTLrV3G.png',
       description: 'Exciting update coming',
       gradient: 'from-amber-500 to-yellow-600'
     },
     {
-      name: 'Coming Soon',
+      name: 'Coming Soon 3',
       icon: 'https://i.imgur.com/X2EDY5B.png',
       description: 'Revolutionary feature ahead',
       gradient: 'from-lime-500 to-green-600'
@@ -178,7 +178,8 @@ const ArmoLobby = ({ onSelectFeature }) => {
                 key={index}
                 variants={itemVariants}
                 whileHover={{ scale: 1.01 }}
-                className="neuro-card p-4 sm:p-5 md:p-6 opacity-75 relative overflow-hidden touch-manipulation"
+                onClick={() => onSelectFeature(feature.name)}
+                className="neuro-card p-4 sm:p-5 md:p-6 opacity-75 relative overflow-hidden touch-manipulation cursor-pointer"
               >
                 {/* Coming Soon Badge */}
                 <div className="absolute top-2 right-2 z-10">

@@ -1,31 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './App.css'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Settings, Zap, MessageCircle, Sparkles, Upload, FileText, Download, RefreshCw, CheckCircle, Menu, Copy, X } from 'lucide-react'
+import { Settings, Zap, MessageCircle, Menu } from 'lucide-react'
 import toast from 'react-hot-toast'
 import JSZip from 'jszip'
+
 // Components
-import ChatMessage from './components/ChatMessage'
 import Modals from './components/Modals'
-import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
 import Header from './components/Header'
 import useSearch from './hooks/useSearch'
-import Sidebar from './components/Sidebar';
-import ArmoLobby from './components/ArmoLobby'
-import * as features from './features';
-
+import Sidebar from './components/Sidebar'
 import PhoneCallScreen from './components/PhoneCallScreen'
+
+// Layout Components
+import AppLayout from './components/layout/AppLayout'
+import MainDisplay from './components/layout/MainDisplay'
+import InputBar from './components/layout/InputBar'
+
+// Features
+import * as features from './features'
 
 // Services
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
 import redisService from './services/redisService'
 import { storageService } from './services/storageService'
-
 import elevenlabsService from './services/elevenlabsService'
-
-// Initialize services
-
 
 // Constants
 const STORAGE_KEYS = {
@@ -53,6 +53,7 @@ function App() {
   // Generate unique IDs for Redis
   const [sessionId] = useState(() => redisService.generateSessionId());
   const [userId] = useState(() => redisService.generateUserId());
+  
   // State management
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
@@ -74,8 +75,6 @@ function App() {
   const [processedFiles, setProcessedFiles] = useState([])
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-
-
   
   // Kyartu Vzgo specific state
   const [showLandingScreen, setShowLandingScreen] = useState(true)
@@ -109,6 +108,9 @@ function App() {
   
   // Mobile menu state
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  
+  // Sidebar collapsed state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   
   // Mobile menu handler
   const closeMobileMenu = useCallback(() => {
@@ -322,9 +324,6 @@ function App() {
     }
   }, [userId, saveToStorage])
 
-  // Handle search commands
-
-
   // Memoized conversation history preparation
   const prepareConversationHistory = useMemo(() => {
     return (messages) => messages.map(msg => ({
@@ -436,8 +435,6 @@ function App() {
     try {
       abortControllerRef.current = new AbortController();
 
-
-
       await handleChatMessage(userMessage, newMessages);
 
     } catch (error) {
@@ -475,7 +472,7 @@ function App() {
       abortControllerRef.current = null
       inputRef.current?.focus()
     }
-  }, [inputMessage, messages, settings, isLoading, saveToStorage, userId, sessionId, kyartuMood])
+  }, [inputMessage, messages, settings, isLoading, saveToStorage, userId, sessionId, kyartuMood, handleSearchCommand, handleChatMessage])
 
   // Handle emoji reactions
   const handleReaction = useCallback(async (messageId, emoji) => {
@@ -522,28 +519,6 @@ function App() {
     }
   }, [userId]);
 
-  // Handle user flags (muting, warnings, etc.)
-  const handleUserFlag = useCallback(async (flag, reason = '') => {
-    try {
-      await redisService.setUserFlag(userId, flag, reason);
-      toast.success(`User ${flag} successfully`);
-    } catch (error) {
-      console.error('Failed to set user flag:', error);
-      toast.error('Failed to update user status');
-    }
-  }, [userId]);
-
-  // Get random user joke for roasting
-  const getRandomUserJoke = useCallback(async () => {
-    try {
-      const joke = await redisService.getRandomUserJoke(userId);
-      return joke;
-    } catch (error) {
-      console.error('Failed to get user joke:', error);
-      return null;
-    }
-  }, [userId]);
-
   // Handle saving moments
   const handleSaveMoment = useCallback(async (message) => {
     try {
@@ -584,20 +559,6 @@ function App() {
       toast.error(`Voice playback failed: ${error.message}`, { id: 'tts-loading' });
     }
   }, []);
-
-  // Clear chat with Redis integration
-  const clearChat = useCallback(async () => {
-    try {
-      setMessages([]);
-      await redisService.delete(`chat:session:${sessionId}`);
-      toast.success('Chat cleared!');
-    } catch (error) {
-      console.error('Failed to clear chat from Redis:', error);
-      setMessages([]);
-      localStorage.removeItem(STORAGE_KEYS.CHAT_HISTORY);
-      toast.success('Chat cleared (locally)!');
-    }
-  }, [sessionId]);
 
   // Handle input key press
   const handleKeyPress = useCallback((e) => {
@@ -696,132 +657,7 @@ function App() {
     fileInputRef.current?.click()
   }, [])
 
-  // Process files with AI improvements
-  const processFilesWithAI = useCallback(async (filesToProcess, options = processingOptions) => {
-    if (!filesToProcess || filesToProcess.length === 0) {
-      toast.error('No files to process');
-      return [];
-    }
-
-    setIsProcessing(true)
-    const results = []
-
-    try {
-      for (const file of filesToProcess) {
-        try {
-        // Create processing prompt based on options
-        let prompt = `Please improve this ${file.name} file:\n\n`
-        
-        if (options.autoFix) prompt += '- Fix any syntax errors or bugs\n'
-        if (options.optimize) prompt += '- Optimize the code for better performance\n'
-        if (options.addComments) prompt += '- Add helpful comments and documentation\n'
-        if (options.formatCode) prompt += '- Improve code formatting and structure\n'
-        if (options.followStandards) prompt += '- Follow best practices and coding standards\n'
-        
-        prompt += `\n\nOriginal content:\n\`\`\`\n${file.content}\n\`\`\`\n\nPlease provide ONLY the improved code without explanations.`
-
-        // Send to AI for processing
-        const conversationHistory = [
-          { role: 'user', content: prompt }
-        ]
-
-        let improvedContent = ''
-        const onChunk = (chunk) => {
-          improvedContent += chunk
-        }
-
-        await groqService.sendMessage(
-          conversationHistory,
-          settings,
-          onChunk
-        )
-
-        // Extract code from AI response
-        const codeMatch = improvedContent.match(/```[\s\S]*?\n([\s\S]*?)\n```/)
-        const finalContent = codeMatch ? codeMatch[1] : improvedContent.trim()
-
-        // Calculate changes
-        const originalLines = file.content.split('\n').length
-        const newLines = finalContent.split('\n').length
-        const changes = {
-          linesAdded: Math.max(0, newLines - originalLines),
-          linesRemoved: Math.max(0, originalLines - newLines),
-          totalChanges: Math.abs(newLines - originalLines)
-        }
-
-        results.push({
-          ...file,
-          improvedContent: finalContent,
-          changes,
-          processed: true,
-          downloadUrl: null
-        })
-
-      } catch (error) {
-        console.error('Error processing file:', error)
-        toast.error(`Failed to process ${file.name}: ${error.message}`)
-        results.push({
-          ...file,
-          error: error.message,
-          processed: false
-        })
-      }
-    }
-
-    setProcessedFiles(results)
-    const successCount = results.filter(f => f.processed).length;
-    if (successCount > 0) {
-      toast.success(`Processed ${successCount} files successfully!`);
-    }
-    return results;
-  } catch (error) {
-    console.error('Error in processFilesWithAI:', error);
-    toast.error(`Processing failed: ${error.message}`);
-    return [];
-  } finally {
-    setIsProcessing(false);
-  }
-  }, [processingOptions, settings])
-
-  // Generate download for improved file
-  const generateDownload = useCallback((file) => {
-    if (!file.improvedContent) return
-
-    const blob = new Blob([file.improvedContent], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = file.name.replace(/\.(\w+)$/, '_improved.$1')
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    
-    toast.success(`Downloaded improved ${file.name}`)
-  }, [])
-
-  // Fix and download files
-  const fixAndDownload = useCallback(async () => {
-    if (uploadedFiles.length === 0) {
-      toast.error('No files uploaded to process')
-      return
-    }
-
-    const results = await processFilesWithAI(uploadedFiles)
-    
-    // Auto-download all successfully processed files
-    results.filter(f => f.processed).forEach(file => {
-      setTimeout(() => generateDownload(file), 500) // Stagger downloads
-    })
-  }, [uploadedFiles, processFilesWithAI, generateDownload])
-
-
   // Kyartu-specific handlers
-
-
-
-
-
   const handleStartChat = useCallback((name, gender) => {
     setUserName(name)
     setUserGender(gender)
@@ -912,7 +748,7 @@ function App() {
   }, [userId])
 
   return (
-    <div className="min-h-screen bg-neuro-base mobile-safe-area">
+    <AppLayout>
       {/* Show Landing Screen or Main App */}
       {showPhoneCall ? (
         <PhoneCallScreen onEndCall={handleEndPhoneCall} />
@@ -925,7 +761,6 @@ function App() {
             uploadedFiles={uploadedFiles}
             isProcessing={isProcessing}
             triggerFileUpload={triggerFileUpload}
-            fixAndDownload={fixAndDownload}
             setShowProcessingModal={setShowProcessingModal}
             setShowSettingsModal={setShowSettingsModal}
             showMobileMenu={showMobileMenu}
@@ -940,7 +775,7 @@ function App() {
           />
 
           {/* Fixed Sidebar for Desktop */}
-          <aside className="hidden lg:block fixed left-0 top-0 w-80 h-screen z-50">
+          <aside className="hidden lg:block fixed left-0 top-0 h-screen z-50" style={{ width: sidebarCollapsed ? '4rem' : '20rem' }}>
             {/* Logo in sidebar */}
             <div className="absolute top-4 left-4 z-10">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
@@ -959,139 +794,40 @@ function App() {
               onSelectFeature={handleSelectFeature}
               currentPage={showArmoLobby ? 'Armo Lobby' : selectedFeature || 'Chat'}
               onReturnToLobby={handleReturnToLobby}
+              onToggleCollapse={(collapsed) => setSidebarCollapsed(collapsed)}
             />
           </aside>
-            
 
+          {/* Main Content Area with MainDisplay component */}
+          <MainDisplay 
+            showArmoLobby={showArmoLobby}
+            selectedFeature={selectedFeature}
+            featureComponents={featureComponents}
+            onSelectFeature={handleSelectFeature}
+            onReturnToLobby={handleReturnToLobby}
+            messages={messages}
+            isTyping={isTyping}
+            streamingMessage={streamingMessage}
+            onReaction={handleReaction}
+            onSaveMoment={handleSaveMoment}
+            onPlayVoice={handlePlayVoice}
+            savedMoments={savedMoments}
+            messagesEndRef={messagesEndRef}
+            sidebarCollapsed={sidebarCollapsed}
+          />
 
-          {/* Main Content Area */}
-          <main className="pt-16 sm:pt-18 md:pt-20 lg:pt-16 pb-24 sm:pb-28 md:pb-32 lg:pl-80 min-h-screen mobile-safe-area">
-            {showArmoLobby ? (
-               <ArmoLobby onSelectFeature={handleSelectFeature} />
-            ) : selectedFeature ? (
-              <div className="p-3 sm:p-4 md:p-6">
-                <button 
-                  onClick={handleReturnToLobby}
-                  className="mb-3 sm:mb-4 neuro-button-secondary px-3 sm:px-4 py-2 text-sm touch-manipulation min-h-[44px] flex items-center gap-2"
-                >
-                  ← Back to Armo Lobby
-                </button>
-                {React.createElement(featureComponents[selectedFeature])}
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4 mobile-chat-height">
-                <AnimatePresence>
-                  {messages.map((message) => (
-                    <ChatMessage 
-                      key={message.id} 
-                      message={message}
-                      onReaction={handleReaction}
-                      onSaveMoment={handleSaveMoment}
-                      onPlayVoice={handlePlayVoice}
-                      isSaved={savedMoments.some(m => m.id === message.id)}
-                    />
-                  ))}
-                </AnimatePresence>
-                
-                {/* Typing Indicator */}
-                {isTyping && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="flex justify-start"
-                  >
-                    <div className="chat-message-ai">
-                      {streamingMessage ? (
-                        <div className="whitespace-pre-wrap">{streamingMessage}</div>
-                      ) : (
-                        <TypingIndicator />
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-            </main>
-
-            {/* Fixed Input Area */}
-            <div className="fixed bottom-0 left-0 lg:left-80 right-0 bg-neuro-base border-t border-neuro-200 z-40">
-              <motion.div 
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="p-2 sm:p-4"
-              >
-                <form onSubmit={handleSubmit} className="chat-input-container">
-                  <div className="flex-1 relative">
-                    <textarea
-                      ref={inputRef}
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Type your message..."
-                      className="neuro-input-field resize-none min-h-[44px] max-h-32 pr-12"
-                      rows={1}
-                      disabled={isLoading}
-                      maxLength={8000}
-                    />
-                    
-                    {inputMessage && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                      >
-                        <Sparkles className="w-4 h-4 text-neuro-400" />
-                      </motion.div>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    {/* Upload Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={triggerFileUpload}
-                      className="neuro-button-secondary px-4 py-3"
-                      title="Upload Files"
-                    >
-                      <Upload className="w-4 h-4" />
-                    </motion.button>
-                    
-
-                    
-                    {isLoading ? (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="button"
-                        onClick={stopGeneration}
-                        className="neuro-button-secondary px-4 py-3 text-red-600"
-                      >
-                        Stop
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="submit"
-                        disabled={!inputMessage.trim() || !groqService.isReady()}
-                        className="neuro-button-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Send className="w-4 h-4" />
-                      </motion.button>
-                    )}
-                  </div>
-                </form>
-                
-                {/* Quick Actions */}
-
-              </motion.div>
-            </div>
-            )}
+          {/* Fixed InputBar Component */}
+          <InputBar
+            inputMessage={inputMessage}
+            setInputMessage={setInputMessage}
+            isLoading={isLoading}
+            onSubmit={handleSubmit}
+            onKeyPress={handleKeyPress}
+            triggerFileUpload={triggerFileUpload}
+            stopGeneration={stopGeneration}
+            inputRef={inputRef}
+            sidebarCollapsed={sidebarCollapsed}
+          />
         </>
       )}
 
@@ -1112,156 +848,6 @@ function App() {
         setProcessingOptions={setProcessingOptions}
       />
       
-      {/* Processing Options Modal */}
-      <AnimatePresence>
-        {showProcessingModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setShowProcessingModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="neuro-card p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-xl font-bold text-gradient mb-4">Processing Options</h2>
-              
-              <div className="space-y-4">
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={processingOptions.autoFix}
-                    onChange={(e) => setProcessingOptions(prev => ({ ...prev, autoFix: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-neuro-700">Auto-fix syntax errors and bugs</span>
-                </label>
-                
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={processingOptions.optimize}
-                    onChange={(e) => setProcessingOptions(prev => ({ ...prev, optimize: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-neuro-700">Optimize for performance</span>
-                </label>
-                
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={processingOptions.addComments}
-                    onChange={(e) => setProcessingOptions(prev => ({ ...prev, addComments: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-neuro-700">Add helpful comments</span>
-                </label>
-                
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={processingOptions.formatCode}
-                    onChange={(e) => setProcessingOptions(prev => ({ ...prev, formatCode: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-neuro-700">Improve formatting</span>
-                </label>
-                
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={processingOptions.followStandards}
-                    onChange={(e) => setProcessingOptions(prev => ({ ...prev, followStandards: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-neuro-700">Follow coding standards</span>
-                </label>
-              </div>
-              
-              {uploadedFiles.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-semibold text-neuro-600 mb-2">Uploaded Files ({uploadedFiles.length})</h3>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        <FileText className="w-3 h-3 text-neuro-500" />
-                        <span className="text-neuro-700 truncate">{file.name}</span>
-                        <span className="text-neuro-500 text-xs">({(file.size / 1024).toFixed(1)}KB)</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {processedFiles.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-neuro-600 mb-2">📊 Processing Results</h3>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {processedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          {file.processed ? (
-                            <CheckCircle className="w-3 h-3 text-green-500" />
-                          ) : (
-                            <FileText className="w-3 h-3 text-red-500" />
-                          )}
-                          <span className="text-neuro-700 truncate">{file.name}</span>
-                        </div>
-                        {file.processed && file.changes && (
-                          <div className="text-xs text-neuro-500">
-                            {file.changes.totalChanges > 0 ? `${file.changes.totalChanges} changes` : 'No changes'}
-                          </div>
-                        )}
-                        {file.processed && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => generateDownload(file)}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Download improved file"
-                          >
-                            <Download className="w-3 h-3" />
-                          </motion.button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex gap-3 mt-6">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowProcessingModal(false)}
-                  className="neuro-button-secondary flex-1 py-2"
-                >
-                  Close
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    fixAndDownload()
-                    setShowProcessingModal(false)
-                  }}
-                  disabled={uploadedFiles.length === 0 || isProcessing}
-                  className="neuro-button-primary flex-1 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isProcessing ? 'Processing...' : 'Fix & Download All'}
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -1271,7 +857,7 @@ function App() {
         onChange={handleFileUpload}
         className="hidden"
       />
-    </div>
+    </AppLayout>
   )
 }
 
