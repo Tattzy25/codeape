@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   // Add build configuration for better error reporting
-  build: {pnpm run build}    // Generate source maps for better debugging
+  build: {    // Generate source maps for better debugging
     sourcemap: process.env.NODE_ENV === 'development',
     // Build target and minification
     target: 'esnext',
