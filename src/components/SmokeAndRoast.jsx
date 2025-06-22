@@ -5,7 +5,7 @@ import { Send } from 'lucide-react';
 
 const SmokeAndRoast = ({ onGoBackToChat, userName }) => {
  const [messages, setMessages] = useState([
- { id: 'initial', role: 'ai', content: `Kyartu is waiting for you to make the first move, ${userName || 'challenger'}...` }
+ { id: 'initial', role: 'ai', content: `Armo is waiting for you to make the first move, ${userName || 'challenger'}...` }
  ]);
  const [inputMessage, setInputMessage] = useState('');
  const messagesEndRef = useRef(null);

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
 const features = [
-  'Armo Lobby',
   'Call Kyartu Ara',
   'Make Me Famous Ara',
   'You\'re Hired Ara',

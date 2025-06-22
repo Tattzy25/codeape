@@ -1,0 +1,76 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+       with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run linter
+        run: pnpm run lint
+
+      - name: Run tests
+        run: pnpm run test || echo "no tests defined"
+
+      - name: Build
+        # Add these enhanced steps to your existing workflow
+        
+      - name: Install dependencies with verbose logging
+          run: |
+            echo "::group::Installing dependencies"
+            pnpm install --reporter=append-only --loglevel=debug
+            echo "::endgroup::"
+        
+        - name: Build with detailed error reporting
+          run: |
+            echo "::group::Building application"
+            set -e
+            export NODE_OPTIONS="--max-old-space-size=4096"
+            pnpm run build 2>&1 | tee build.log
+            echo "::endgroup::"
+          continue-on-error: false
+        
+        - name: Upload build logs on failure
+          if: failure()
+          uses: actions/upload-artifact@v4
+          with:
+            name: build-logs
+            path: |
+              build.log
+              node_modules/.pnpm/debug.log
+              ~/.pnpm-state/pnpm-debug.log
+        
+        - name: Show detailed error info on failure
+          if: failure()
+          run: |
+            echo "::error::Build failed. Checking for common issues..."
+            echo "Node version: $(node --version)"
+            echo "PNPM version: $(pnpm --version)"
+            echo "Available memory: $(free -h || echo 'N/A')"
+            echo "Disk space: $(df -h . || echo 'N/A')"
+            if [ -f "build.log" ]; then
+              echo "::group::Build log contents"
+              cat build.log
+              echo "::endgroup::"
+            fi

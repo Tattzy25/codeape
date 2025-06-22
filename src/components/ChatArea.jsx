@@ -47,9 +47,9 @@ const ChatArea = ({
             className="text-center py-12"
           >
             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
-              <img src="https://i.imgur.com/2CfGZgK.png" alt="Kyartu Vzgo" className="w-full h-full object-cover" />
+              <img src="https://i.imgur.com/2CfGZgK.png" alt="Armo" className="w-full h-full object-cover" />
             </div>
-            <h3 className="text-xl font-semibold text-neuro-700 mb-2">Welcome to Kyartu Vzgo!</h3>
+            <h3 className="text-xl font-semibold text-neuro-700 mb-2">Welcome to Armo!</h3>
             <p className="text-neuro-500 max-w-md mx-auto">
               Glendale's loudest. Armenia's proudest. Your ego's worst enemy. Ready to roast your code and crush your confidence? Let's get started!
             </p>
@@ -66,7 +66,7 @@ const ChatArea = ({
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden shadow-lg flex-shrink-0">
-                    <img src="https://i.imgur.com/2CfGZgK.png" alt="Kyartu Vzgo" className="w-full h-full object-cover" />
+                    <img src="https://i.imgur.com/2CfGZgK.png" alt="Armo" className="w-full h-full object-cover" />
                   </div>
                 )}
                 
@@ -124,7 +124,7 @@ const ChatArea = ({
               className="flex gap-3 justify-start"
             >
               <div className="w-8 h-8 rounded-full overflow-hidden shadow-lg flex-shrink-0">
-                <img src="https://i.imgur.com/2CfGZgK.png" alt="Kyartu Vzgo" className="w-full h-full object-cover" />
+                <img src="https://i.imgur.com/2CfGZgK.png" alt="Armo" className="w-full h-full object-cover" />
               </div>
               <div className="neuro-card p-4 bg-white">
                 <div className="flex gap-1">
@@ -178,7 +178,7 @@ const ChatArea = ({
                 }
               }}
               placeholder="Ask me anything... I dare you."
-              className="w-full p-3 pr-12 border border-neuro-300 rounded-lg focus:ring-2 focus:ring-neuro-500 focus:border-transparent resize-none min-h-[50px] max-h-32"
+              className="w-full p-2 sm:p-3 pr-12 border border-neuro-300 rounded-lg focus:ring-2 focus:ring-neuro-500 focus:border-transparent resize-none min-h-[50px] max-h-32"
               rows={1}
               disabled={isStreaming}
             />

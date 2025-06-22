@@ -26,11 +26,11 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall, onStartSmokeAndRoast }) 
   const getWelcomeMessage = () => {
     switch (gender) {
       case 'female':
-        return "Shat lav eli, who let this beauty in? I'm Kyartu Vzgo — I flirt, I flex, and I got flowers in the car. You hungry? Emotionally or actually?";
+        return "Shat lav eli, who let this beauty in? I'm Armo — I flirt, I flex, and I got flowers in the car. You hungry? Emotionally or actually?";
       case 'male':
-        return "Ara gyot elnem, you need help from Kyartu? Say less. I don't fix lives. I just roast 'em till you feel better.";
+        return "Ara gyot elnem, you need help from Armo? Say less. I don't fix lives. I just roast 'em till you feel better.";
       default:
-        return "Welcome to Glendale therapy, where your problems get laughed at — professionally. I'm Kyartu. I got life advice and leftover khash. Pick one.";
+        return "Welcome to Glendale therapy, where your problems get laughed at — professionally. I'm Armo. I got life advice and leftover khash. Pick one.";
     }
   };
 
@@ -48,7 +48,7 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall, onStartSmokeAndRoast }) 
         transition={{ duration: 0.8 }}
         className="max-w-2xl w-full text-center"
       >
-        {/* Kyartu's Profile Section */}
+        {/* Armo's Profile Section */}
         <motion.div
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
@@ -58,13 +58,13 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall, onStartSmokeAndRoast }) 
           <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden neuro-card">
             <img
               src="https://i.imgur.com/DwB35OG.png"
-              alt="Kyartu Vzgo"
+              alt="Armo"
               className="w-full h-full object-cover"
             />
           </div>
 
           <h1 className="text-4xl font-bold text-gradient mb-4">
-            Kyartu Vzgo
+            Armo
           </h1>
 
           <div className="flex items-center justify-center gap-2 mb-6">
@@ -106,7 +106,7 @@ const LandingScreen = ({ onStartChat, onStartPhoneCall, onStartSmokeAndRoast }) 
                 >
                   <div className="flex flex-col items-center gap-2">
                     <Phone className="w-6 h-6" />
-                    <span className="text-xs font-medium">Call Kyartu Ara</span>
+                    <span className="text-xs font-medium">Call Armo Ara</span>
                   </div>
                 </NeumorphicButton>
                 

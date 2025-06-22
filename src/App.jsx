@@ -6,7 +6,9 @@ import toast from 'react-hot-toast'
 import JSZip from 'jszip'
 
 // Components
+import ChatMessage from './components/ChatMessage'
 import Modals from './components/Modals'
+import TypingIndicator from './components/TypingIndicator'
 import LandingScreen from './components/LandingScreen'
 import Header from './components/Header'
 import useSearch from './hooks/useSearch'
@@ -25,6 +27,7 @@ import * as features from './features'
 import groqService, { DEFAULT_SETTINGS } from './services/groqService'
 import redisService from './services/redisService'
 import { storageService } from './services/storageService'
+import tavilyService from './services/tavilyService'
 import elevenlabsService from './services/elevenlabsService'
 
 // Constants
@@ -49,7 +52,6 @@ const RESPECT_KEYWORDS = {
 }
 
 function App() {
-  const { isSearching, handleSearchCommand } = useSearch();
   // Generate unique IDs for Redis
   const [sessionId] = useState(() => redisService.generateSessionId());
   const [userId] = useState(() => redisService.generateUserId());
@@ -75,6 +77,8 @@ function App() {
   const [processedFiles, setProcessedFiles] = useState([])
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false)
   
   // Kyartu Vzgo specific state
   const [showLandingScreen, setShowLandingScreen] = useState(true)
@@ -84,6 +88,7 @@ function App() {
   const [respectMeter, setRespectMeter] = useState(50)
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [showArmoLobby, setShowArmoLobby] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false)
 
   const featureComponents = {
     'Call Kyartu Ara': features.CallKyartuAra,
@@ -127,6 +132,7 @@ function App() {
     setSelectedFeature(feature)
     setShowArmoLobby(false)
   }
+
 
   // Refs
   const inputRef = useRef(null)
@@ -324,6 +330,44 @@ function App() {
     }
   }, [userId, saveToStorage])
 
+  // Handle search commands
+  const handleSearchCommand = useCallback(async (userMessage, newMessages) => {
+    const searchQuery = userMessage.content.replace(/^\/(search|web|tavily)\s*/i, '').trim();
+    
+    if (!searchQuery) {
+      throw new Error('Please provide a search query. Example: /search renewable energy benefits');
+    }
+
+    setStreamingMessage(isDeepSearchEnabled ? '🔍 Deep searching the web...' : '🔍 Searching the web...');
+    const searchResults = isDeepSearchEnabled 
+      ? await tavilyService.advancedSearch(searchQuery)
+      : await tavilyService.search(searchQuery);
+  
+    const formattedResults = tavilyService.formatResults(searchResults);
+      
+    const aiMessage = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: formattedResults.formatted,
+      timestamp: new Date().toISOString(),
+      isSearchResult: true,
+      searchQuery: searchQuery,
+      resultCount: formattedResults.resultCount
+    };
+
+    const finalMessages = [...newMessages, aiMessage];
+    setMessages(finalMessages);
+    
+    try {
+      await redisService.storeChatHistory(sessionId, finalMessages);
+      await redisService.cacheSearchResults(searchQuery, searchResults);
+      await redisService.updateLastSeen(userId);
+    } catch (error) {
+      console.error('Failed to save to Redis:', error);
+      saveToStorage(STORAGE_KEYS.CHAT_HISTORY, finalMessages);
+    }
+  }, [isDeepSearchEnabled, sessionId, userId, saveToStorage, setStreamingMessage, setMessages]);
+
   // Memoized conversation history preparation
   const prepareConversationHistory = useMemo(() => {
     return (messages) => messages.map(msg => ({
@@ -412,12 +456,6 @@ function App() {
       return;
     }
 
-    if (inputMessage.toLowerCase().startsWith('/search')) {
-      handleSearchCommand(inputMessage.substring(8), messages, setMessages, setIsLoading, kyartuMood, abortControllerRef);
-      setInputMessage(''); // Clear input after command
-      return;
-    }
-
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -434,6 +472,14 @@ function App() {
 
     try {
       abortControllerRef.current = new AbortController();
+
+      const searchCommands = ['/search', '/web', '/tavily'];
+      const isSearchCommand = searchCommands.some(cmd => userMessage.content.toLowerCase().startsWith(cmd));
+      
+      if (isSearchCommand) {
+        await handleSearchCommand(userMessage, newMessages);
+        return;
+      }
 
       await handleChatMessage(userMessage, newMessages);
 
@@ -472,7 +518,7 @@ function App() {
       abortControllerRef.current = null
       inputRef.current?.focus()
     }
-  }, [inputMessage, messages, settings, isLoading, saveToStorage, userId, sessionId, kyartuMood, handleSearchCommand, handleChatMessage])
+  }, [inputMessage, messages, settings, isLoading, saveToStorage, isDeepSearchEnabled, userId, sessionId, kyartuMood, handleSearchCommand, handleChatMessage])
 
   // Handle emoji reactions
   const handleReaction = useCallback(async (messageId, emoji) => {
@@ -657,7 +703,142 @@ function App() {
     fileInputRef.current?.click()
   }, [])
 
+<<<<<<< HEAD
   // Kyartu-specific handlers
+=======
+  // Process files with AI improvements
+  const processFilesWithAI = useCallback(async (filesToProcess, options = processingOptions) => {
+    if (!filesToProcess || filesToProcess.length === 0) {
+      toast.error('No files to process');
+      return [];
+    }
+
+    setIsProcessing(true)
+    const results = []
+
+    try {
+      for (const file of filesToProcess) {
+        try {
+        // Create processing prompt based on options
+        let prompt = `Please improve this ${file.name} file:\n\n`
+        
+        if (options.autoFix) prompt += '- Fix any syntax errors or bugs\n'
+        if (options.optimize) prompt += '- Optimize the code for better performance\n'
+        if (options.addComments) prompt += '- Add helpful comments and documentation\n'
+        if (options.formatCode) prompt += '- Improve code formatting and structure\n'
+        if (options.followStandards) prompt += '- Follow best practices and coding standards\n'
+        
+        prompt += `\n\nOriginal content:\n\`\`\`\n${file.content}\n\`\`\`\n\nPlease provide ONLY the improved code without explanations.`
+
+        // Send to AI for processing
+        const conversationHistory = [
+          { role: 'user', content: prompt }
+        ]
+
+        let improvedContent = ''
+        const onChunk = (chunk) => {
+          improvedContent += chunk
+        }
+
+        await groqService.sendMessage(
+          conversationHistory,
+          settings,
+          onChunk
+        )
+
+        // Extract code from AI response
+        const codeMatch = improvedContent.match(/```[\s\S]*?\n([\s\S]*?)\n```/)
+        const finalContent = codeMatch ? codeMatch[1] : improvedContent.trim()
+
+        // Calculate changes
+        const originalLines = file.content.split('\n').length
+        const newLines = finalContent.split('\n').length
+        const changes = {
+          linesAdded: Math.max(0, newLines - originalLines),
+          linesRemoved: Math.max(0, originalLines - newLines),
+          totalChanges: Math.abs(newLines - originalLines)
+        }
+
+        results.push({
+          ...file,
+          improvedContent: finalContent,
+          changes,
+          processed: true,
+          downloadUrl: null
+        })
+
+      } catch (error) {
+        console.error('Error processing file:', error)
+        toast.error(`Failed to process ${file.name}: ${error.message}`)
+        results.push({
+          ...file,
+          error: error.message,
+          processed: false
+        })
+      }
+    }
+
+    setProcessedFiles(results)
+    const successCount = results.filter(f => f.processed).length;
+    if (successCount > 0) {
+      toast.success(`Processed ${successCount} files successfully!`);
+    }
+    return results;
+  } catch (error) {
+    console.error('Error in processFilesWithAI:', error);
+    toast.error(`Processing failed: ${error.message}`);
+    return [];
+  } finally {
+    setIsProcessing(false);
+  }
+  }, [processingOptions, settings])
+
+  // Generate download for improved file
+  const generateDownload = useCallback((file) => {
+    if (!file.improvedContent) return
+
+    const blob = new Blob([file.improvedContent], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.name.replace(/\.(\w+)$/, '_improved.$1')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    toast.success(`Downloaded improved ${file.name}`)
+  }, [])
+
+  // Fix and download files
+  const fixAndDownload = useCallback(async () => {
+    if (uploadedFiles.length === 0) {
+      toast.error('No files uploaded to process')
+      return
+    }
+
+    const results = await processFilesWithAI(uploadedFiles)
+    
+    // Auto-download all successfully processed files
+    results.filter(f => f.processed).forEach(file => {
+      setTimeout(() => generateDownload(file), 500) // Stagger downloads
+    })
+  }, [uploadedFiles, processFilesWithAI, generateDownload])
+
+  // Close mobile menu when clicking outside
+  const closeMobileMenu = useCallback(() => {
+    setShowMobileMenu(false)
+  }, [])
+
+  // Kyartu-specific handlers
+
+
+
+  const handleToggleSidebar = useCallback(() => {
+    setShowSidebar(!showSidebar)
+  }, [showSidebar])
+
+>>>>>>> 06965cc519e106bad8bced9be4cad528270eaee4
   const handleStartChat = useCallback((name, gender) => {
     setUserName(name)
     setUserGender(gender)
@@ -748,7 +929,11 @@ function App() {
   }, [userId])
 
   return (
+<<<<<<< HEAD
     <AppLayout>
+=======
+    <div className="min-h-screen bg-neuro-base flex flex-col mobile-safe-area">
+>>>>>>> 06965cc519e106bad8bced9be4cad528270eaee4
       {/* Show Landing Screen or Main App */}
       {showPhoneCall ? (
         <PhoneCallScreen onEndCall={handleEndPhoneCall} />
@@ -761,11 +946,16 @@ function App() {
             uploadedFiles={uploadedFiles}
             isProcessing={isProcessing}
             triggerFileUpload={triggerFileUpload}
+<<<<<<< HEAD
+=======
+            fixAndDownload={fixAndDownload}
+>>>>>>> 06965cc519e106bad8bced9be4cad528270eaee4
             setShowProcessingModal={setShowProcessingModal}
             setShowSettingsModal={setShowSettingsModal}
             showMobileMenu={showMobileMenu}
             setShowMobileMenu={setShowMobileMenu}
             closeMobileMenu={closeMobileMenu}
+<<<<<<< HEAD
             fileInputRef={fileInputRef}
             handleFileUpload={handleFileUpload}
             kyartuMood={kyartuMood}
@@ -778,10 +968,21 @@ function App() {
           <aside className="hidden lg:block fixed left-0 top-0 h-screen z-50" style={{ width: sidebarCollapsed ? '4rem' : '20rem' }}>
             {/* Logo in sidebar */}
             <div className="absolute top-4 left-4 z-10">
+=======
+            kyartuMood={kyartuMood}
+            onToggleSidebar={handleToggleSidebar}
+          />
+
+          {/* Main App Layout */}
+          <div className="flex flex-1 gap-4 p-4 pt-0">
+            {/* Logo in top left corner */}
+            <div className="absolute top-4 left-4 z-30">
+>>>>>>> 06965cc519e106bad8bced9be4cad528270eaee4
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
                 <img src="https://i.imgur.com/lMiuQUh.png" alt="Kyartu Vzgo Logo" className="w-full h-full object-cover" />
               </div>
             </div>
+<<<<<<< HEAD
             <Sidebar
               isOpen={true}
               respectMeter={respectMeter}
@@ -828,6 +1029,189 @@ function App() {
             inputRef={inputRef}
             sidebarCollapsed={sidebarCollapsed}
           />
+=======
+
+            {/* Permanent Sidebar for Desktop, Toggle for Mobile */}
+            <div className="hidden lg:block w-80 flex-shrink-0">
+              <Sidebar
+                isOpen={true}
+                respectMeter={respectMeter}
+                kyartuMood={kyartuMood}
+                chatHistory={chatHistory}
+                savedMoments={savedMoments}
+                userName={userName}
+                onClose={() => {}}
+                onStartPhoneCall={handleStartPhoneCall}
+              />
+            </div>
+            
+            {/* Mobile Sidebar */}
+            <AnimatePresence>
+              {showSidebar && (
+                <div className="lg:hidden">
+                  <Sidebar
+                    isOpen={showSidebar}
+                    respectMeter={respectMeter}
+                    kyartuMood={kyartuMood}
+                    chatHistory={chatHistory}
+                    savedMoments={savedMoments}
+                    userName={userName}
+                    onClose={() => setShowSidebar(false)}
+                    onStartPhoneCall={handleStartPhoneCall}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
+
+            {/* Chat Messages */}
+            <main className="flex-1 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 space-y-3 sm:space-y-4">
+                <AnimatePresence>
+                  {messages.map((message) => (
+                    <ChatMessage 
+                      key={message.id} 
+                      message={message}
+                      onReaction={handleReaction}
+                      onSaveMoment={handleSaveMoment}
+                      onPlayVoice={handlePlayVoice}
+                      isSaved={savedMoments.some(m => m.id === message.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+                
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex justify-start"
+                  >
+                    <div className="chat-message-ai">
+                      {streamingMessage ? (
+                        <div className="whitespace-pre-wrap">{streamingMessage}</div>
+                      ) : (
+                        <TypingIndicator />
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input Area */}
+              <motion.div 
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="p-2 sm:p-4"
+              >
+                <form onSubmit={handleSubmit} className="chat-input-container">
+                  <div className="flex-1 relative">
+                    <textarea
+                      ref={inputRef}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type your message..."
+                      className="neuro-input-field resize-none min-h-[44px] max-h-32 pr-12"
+                      rows={1}
+                      disabled={isLoading}
+                      maxLength={8000}
+                    />
+                    
+                    {inputMessage && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        <Sparkles className="w-4 h-4 text-neuro-400" />
+                      </motion.div>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {/* Upload Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={triggerFileUpload}
+                      className="neuro-button-secondary px-4 py-3"
+                      title="Upload Files"
+                    >
+                      <Upload className="w-4 h-4" />
+                    </motion.button>
+                    
+                    {/* Mobile Sidebar Toggle */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={handleToggleSidebar}
+                      className="neuro-button-secondary px-4 py-3 lg:hidden"
+                      title="Toggle Sidebar"
+                    >
+                      <Menu className="w-4 h-4" />
+                    </motion.button>
+                    
+                    {isLoading ? (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={stopGeneration}
+                        className="neuro-button-secondary px-4 py-3 text-red-600"
+                      >
+                        Stop
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
+                        disabled={!inputMessage.trim() || !groqService.isReady()}
+                        className="neuro-button-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Send className="w-4 h-4" />
+                      </motion.button>
+                    )}
+                  </div>
+                </form>
+                
+                {/* Quick Actions */}
+                <div className="flex justify-center mt-3 gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={clearChat}
+                    className="text-xs text-neuro-500 hover:text-neuro-700 px-3 py-1 rounded-full neuro-button"
+                  >
+                    Clear Chat
+                  </motion.button>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsDeepSearchEnabled(!isDeepSearchEnabled)}
+                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                      isDeepSearchEnabled 
+                        ? 'text-white gradient-primary shadow-lg' 
+                        : 'text-neuro-500 hover:text-neuro-700 neuro-button'
+                    }`}
+                  >
+                    🔍 Deep Search
+                  </motion.button>
+                  
+                  <div className="text-xs text-neuro-400 px-3 py-1">
+                    {messages.length > 1 ? `${messages.length - 1} messages` : 'Start chatting'}
+                  </div>
+                </div>
+              </motion.div>
+            </main>
+          </div>
+>>>>>>> 06965cc519e106bad8bced9be4cad528270eaee4
         </>
       )}
 

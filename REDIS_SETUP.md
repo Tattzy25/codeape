@@ -1,7 +1,7 @@
-# 🔥 KYARTU REDIS STORAGE SETUP
+# 🔥 REDIS SETUP GUIDE
 
 ## Overview
-Kyartu now uses Redis for advanced data persistence and caching, enabling features like:
+Armo uses Redis for advanced data persistence and caching, enabling features like:
 - Chat history with TTL management
 - User session state tracking
 - Respect & mood meter persistence
@@ -55,13 +55,13 @@ const redis = new Redis({
 ### 2. User Session State
 - **Key**: `session:{sessionId}`
 - **TTL**: 24h
-- **Purpose**: Tracks if Kyartu's in cousin mode, flirt mode, roast mode
+- **Purpose**: Tracks if Armo's in cousin mode, flirt mode, roast mode
 - **Data**: `{ currentMode: 'flirt', lastPage: 'welcome', joinedAt }`
 
 ### 3. Respect & Mood Meter
 - **Key**: `meter:respect:{userId}` / `meter:mood:{userId}`
 - **TTL**: 7d
-- **Purpose**: Keeps score so Kyartu knows if you're a clown or a king
+- **Purpose**: Keeps score so Armo knows if you're a clown or a king
 - **Data**: `{ respectScore: 3.5, lastMood: 'emotional' }`
 
 ### 4. Search Result Cache

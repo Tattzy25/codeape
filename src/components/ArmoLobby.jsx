@@ -113,7 +113,11 @@ const ArmoLobby = ({ onSelectFeature }) => {
             zeroFucksgiven()
           </h1>
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-neuro-600 max-w-2xl mx-auto px-2 leading-relaxed">
+<<<<<<< HEAD
             Choose your adventure and let Kyartu guide you through the ultimate Armenian experience
+=======
+            Choose your adventure and let Armo guide you through the ultimate Armenian experience
+>>>>>>> 06965cc519e106bad8bced9be4cad528270eaee4
           </p>
         </motion.div>
 
@@ -159,6 +163,7 @@ const ArmoLobby = ({ onSelectFeature }) => {
                       <span className="sm:hidden">✓</span>
                     </span>
                   </div>
+
                 </motion.div>
               );
             })}

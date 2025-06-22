@@ -1,6 +1,6 @@
 /**
- * 🔥 KYARTU REDIS STORAGE SERVICE
- * Handles all Redis operations for Kyartu's savage AI personality
+ * 🔥 ARMO REDIS STORAGE SERVICE
+ * Handles all Redis operations for Armo's savage AI personality
  */
 
 class RedisService {

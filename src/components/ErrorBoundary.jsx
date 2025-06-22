@@ -11,19 +11,33 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
+  // Add to your existing ErrorBoundary component
+  
   componentDidCatch(error, errorInfo) {
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
-
-    // Log error to console in development
-    if (import.meta.env.DEV) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Enhanced error logging
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    };
+    
+    // Log to console with full details
+    console.group('🚨 React Error Boundary Caught Error');
+    console.error('Error:', error);
+    console.error('Error Info:', errorInfo);
+    console.error('Full Details:', errorDetails);
+    console.groupEnd();
+    
+    // Send to error tracking service if available
+    if (window.gtag) {
+      window.gtag('event', 'exception', {
+        description: error.message,
+        fatal: false
+      });
     }
-
-    // In production, you might want to log to an error reporting service
-    // Example: logErrorToService(error, errorInfo);
   }
 
   handleReload = () => {

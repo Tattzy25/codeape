@@ -53,15 +53,15 @@ export const useChatActions = (appState) => {
       
       // Deep search if enabled
       let searchResults = null
-  
+      if (settings.deepSearch) {
         try {
           searchResults = await tavilyService.search(inputMessage)
         } catch (error) {
           console.error('Search error:', error)
+          searchResults = null
         }
       }
-      
-      // Get response from AI
+
       const response = await groqService.chat(
         messages.concat(userMessage),
         searchResults,
@@ -101,6 +101,7 @@ export const useChatActions = (appState) => {
       await memoryService.addMemory(userMessage, assistantMessage)
       
     } catch (error) {
+
       if (error.name !== 'AbortError') {
         console.error('Chat error:', error)
         toast.error('Failed to get response')

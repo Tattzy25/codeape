@@ -3,15 +3,69 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Add build configuration for better error reporting
+  build: {pnpm run build}    // Generate source maps for better debugging
+    sourcemap: process.env.NODE_ENV === 'development',
+    // Build target and minification
+    target: 'esnext',
+    minify: 'terser',
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    // Enable detailed build reporting
+    reportCompressedSize: true,
+    // Custom rollup options for error handling and chunking
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress circular dependency warnings for groq-sdk
+        if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.message.includes('groq-sdk')) {
+          return;
+        }
+        // Log other warnings with context
+        console.warn(`⚠️  Build Warning: ${warning.message}`);
+        if (warning.loc) {
+          console.warn(`   Location: ${warning.loc.file}:${warning.loc.line}:${warning.loc.column}`);
+        }
+        warn(warning);
+      },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('groq-sdk') || id.includes('ai')) {
+              return 'ai-vendor';
+            }
+            if (id.includes('framer-motion') || id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            if (id.includes('jszip')) {
+              return 'utils-vendor';
+            }
+            if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('react-syntax-highlighter')) {
+              return 'markdown-vendor';
+            }
+            if (id.includes('react-hot-toast')) {
+              return 'toast-vendor';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
+  
+  // Enhanced logging during development
+  logLevel: process.env.NODE_ENV === 'development' ? 'info' : 'warn',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'kyartu Vzgo',
-        short_name: 'kyartu Vzgo',
-        description: 'Revolutionary AI-powered chatbot with lightning-fast responses',
+        name: 'Armo GPT',
+        short_name: 'Armo GPT',
+        description: 'Revolutionary AI-powered Armenian chatbot with lightning-fast responses',
         theme_color: '#667eea',
         background_color: '#e0e5ec',
         display: 'standalone',
@@ -58,38 +112,7 @@ export default defineConfig({
       }
     })
   ],
-  build: {
-    target: 'esnext',
-    minify: 'terser',
-    chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('groq-sdk') || id.includes('ai')) {
-              return 'ai-vendor';
-            }
-            if (id.includes('framer-motion') || id.includes('lucide-react')) {
-              return 'ui-vendor';
-            }
-            if (id.includes('jszip')) {
-              return 'utils-vendor';
-            }
-            if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('react-syntax-highlighter')) {
-              return 'markdown-vendor';
-            }
-            if (id.includes('react-hot-toast')) {
-              return 'toast-vendor';
-            }
-            return 'vendor';
-          }
-        }
-      }
-    }
-  },
+
   server: {
     port: 3000,
     host: true
